@@ -176,9 +176,9 @@ anomaly_list = [
     r'%',  # Start of comment
     '--',  # Start of SQL comment
     '?#',  # Start of PCRE comment (e.g., MongoDB regex queries)
-    unichr(0),  # NULL
-    unichr(0) + 'xxxxxxxx',  # NULL followed by more data
-    unichr(0x1a),  # ctrl-z (end of stream)
+    chr(0),  # NULL
+    chr(0) + 'xxxxxxxx',  # NULL followed by more data
+    chr(0x1a),  # ctrl-z (end of stream)
     "\xff\xfe",  # Illegal unicode as string
     "\xff\xff",  # Illegal unicode as string
     '\t',  # tab
