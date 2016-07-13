@@ -28,7 +28,7 @@ class tlschecker:
         for key in settings.keys():
             setattr(self.context,key,settings[key])
 
-    def run(self,host,port):
+    def check(self,host,port):
         self.context.host = host
         self.context.port = port
 
