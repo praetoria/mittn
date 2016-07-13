@@ -33,6 +33,12 @@ class tlschecker:
         self.context.port = port
         if hasattr(self,"disabled_protocols") is False:
             self.disabled_protocols = ["SSLv2","SSLv3"]
+        if hasattr(self,"cert_days_valid") is False:
+            self.cert_days_valid = 30
+        if hasattr(self,"dh_group_size") is False:
+            self.dh_group_size = 2048
+        if hasattr(self,"public_key_size") is False:
+            self.public_key_size = 2048
 
         for proto in self.disabled_protocols:
             self.sslyze_run(proto)
@@ -40,7 +46,7 @@ class tlschecker:
         self.sslyze_run("TLSv1_2")
         self.proto_enabled_check()
         self.cert_begin_check()
-        self.cert_end_check(30)
+        self.cert_end_check(self.cert_days_valid)
         self.compression_disabled_check()
         self.secure_reneg_check()
         self.cipher_suites_disabled_check()
@@ -49,10 +55,10 @@ class tlschecker:
         self.strict_tls_headers_check()
         self.heartbleed_check()
         self.sha1_check()
-        self.dh_group_size_check(2048)
+        self.dh_group_size_check(self.dh_group_size)
         self.trusted_ca_check()
         self.cert_matching_hostname_check()
-        self.public_key_size_check(2048)
+        self.public_key_size_check(self.public_key_size)
 
     #@step('sslyze is correctly installed')
     def sslyze_version_check(self):

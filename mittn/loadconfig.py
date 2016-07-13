@@ -10,3 +10,14 @@ class LoadConfig:
         # tool based configuration
         for key in config[section]:
             setattr(self,key,config[section][key])
+
+        # parse list type attributes
+        for attr in [
+                "suite_blacklist",
+                "suite_whitelist",
+                "preferred_suites"
+                ]:
+            if hasattr(self, attr):
+                l = getattr(self,attr).strip(",").split(",")
+                l = [i.strip() for i in l]
+                setattr(self,attr,l)
