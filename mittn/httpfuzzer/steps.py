@@ -98,12 +98,6 @@ class httpfuzzer:
         # Unicode library will barf on fuzzed data
         self.context.targeturi = str(uri)
 
-    def store_http_methods(context, methods):
-        """Store a list of HTTP methods to use
-        """
-
-        context.injection_methods = methods.split(",")
-
     def store_form_submission(self, submission, method):
         """For static injection, store a valid form where elements are replaced with
         injections and test it once. This is also used for the valid case
@@ -138,7 +132,7 @@ class httpfuzzer:
         # (one valid case is just a special case of providing
         # several valid cases)
         self.context.submission = [url_to_dict(submission)]
-        self.context.submission_method = 'GET'
+        self.context.submission_ethod = 'GET'
         self.context.type = 'url-parameters'  # Used downstream for selecting encoding
         self.context.content_type = 'application/x-www-form-urlencoded; charset=utf-8'
         test_valid_submission(self.context)

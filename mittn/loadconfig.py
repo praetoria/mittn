@@ -15,7 +15,8 @@ class LoadConfig:
         for attr in [
                 "suite_blacklist",
                 "suite_whitelist",
-                "preferred_suites"
+                "preferred_suites",
+                "injection_methods"
                 ]:
             if hasattr(self, attr):
                 l = getattr(self,attr).strip(",").split(",")
