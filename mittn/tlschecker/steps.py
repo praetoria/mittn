@@ -22,7 +22,7 @@ from mittn.loadconfig import LoadConfig
 class tlschecker:
     def __init__(self):
         self.context = LoadConfig("tlschecker")
-        self.sslyze_version_check()
+        self.check_sslyze_version()
 
     def set(self,settings = {}):
         for key in settings.keys():
@@ -31,37 +31,45 @@ class tlschecker:
     def run(self,host,port):
         self.context.host = host
         self.context.port = port
+
+        # protocols that should be disabled
         if hasattr(self,"disabled_protocols") is False:
             self.disabled_protocols = ["SSLv2","SSLv3"]
+
+        # minimum days from today the certificate should stay valid
         if hasattr(self,"cert_days_valid") is False:
             self.cert_days_valid = 30
+
+        # minimum D-H group size
         if hasattr(self,"dh_group_size") is False:
             self.dh_group_size = 2048
+
+        # minimum public key size
         if hasattr(self,"public_key_size") is False:
             self.public_key_size = 2048
 
         for proto in self.disabled_protocols:
             self.sslyze_run(proto)
-            self.proto_disabled_check()
+            self.check_proto_disabled()
         self.sslyze_run("TLSv1_2")
-        self.proto_enabled_check()
-        self.cert_begin_check()
-        self.cert_end_check(self.cert_days_valid)
-        self.compression_disabled_check()
-        self.secure_reneg_check()
-        self.cipher_suites_disabled_check()
-        self.cipher_suites_enabled_check()
-        self.preferred_suites_check()
-        self.strict_tls_headers_check()
-        self.heartbleed_check()
-        self.sha1_check()
-        self.dh_group_size_check(self.dh_group_size)
-        self.trusted_ca_check()
-        self.cert_matching_hostname_check()
-        self.public_key_size_check(self.public_key_size)
+        self.check_proto_enabled()
+        self.check_cert_begin()
+        self.check_cert_end(self.cert_days_valid)
+        self.check_compression_disabled()
+        self.check_secure_reneg()
+        self.check_cipher_suites_disabled()
+        self.check_cipher_suites_enabled()
+        self.check_preferred_suites()
+        self.check_strict_tls_headers()
+        self.check_heartbleed()
+        self.check_sha1()
+        self.check_dh_group_size(self.dh_group_size)
+        self.check_trusted_ca()
+        self.check_cert_matching_hostname()
+        self.check_public_key_size(self.public_key_size)
 
     #@step('sslyze is correctly installed')
-    def sslyze_version_check(self):
+    def check_sslyze_version(self):
         context = self.context
         context.output = check_output([context.sslyze_location, '--version'])
         assert "0.13.6" in context.output, "SSLyze version 0.13.6 is required"
@@ -86,7 +94,7 @@ class tlschecker:
         os.unlink(xmloutfile.name)
     
     #@step(u'a TLS connection can be established')
-    def proto_enabled_check(self):
+    def check_proto_enabled(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -109,7 +117,7 @@ class tlschecker:
             "No acceptable cipher suites found at %s:%s" % (context.host, context.port)
 
     #@step(u'a TLS connection cannot be established')
-    def proto_disabled_check(self):
+    def check_proto_disabled(self):
         try:
             root = self.context.xmloutput.getroot()
         except AttributeError:
@@ -125,7 +133,7 @@ class tlschecker:
             "An acceptable cipher suite was found (= a connection was made)."
 
     #@step(u'Time is more than validity start time')
-    def cert_begin_check(self):
+    def check_cert_begin(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -138,7 +146,7 @@ class tlschecker:
 
 
     #@step(u'Time plus "{days}" days is less than validity end time')
-    def cert_end_check(self, days):
+    def check_cert_end(self, days):
         context = self.context
         #days = int(days)
         try:
@@ -153,7 +161,7 @@ class tlschecker:
             (days, notafter_string)
 
     #@step(u'compression is not enabled')
-    def compression_disabled_check(self):
+    def check_compression_disabled(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -168,7 +176,7 @@ class tlschecker:
 
 
     #@step(u'secure renegotiation is supported')
-    def secure_reneg_check(self):
+    def check_secure_reneg(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -183,7 +191,7 @@ class tlschecker:
             "Secure renegotiation is not supported (should be)"
 
     #@step(u'the following cipher suites are disabled')
-    def cipher_suites_disabled_check(self):
+    def check_cipher_suites_disabled(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -203,7 +211,7 @@ class tlschecker:
 
 
     #@step(u'at least one the following cipher suites is enabled')
-    def cipher_suites_enabled_check(self):
+    def check_cipher_suites_enabled(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -221,7 +229,7 @@ class tlschecker:
         assert found, "None of listed cipher suites were enabled"
 
     #@step(u'one of the following cipher suites is preferred')
-    def preferred_suites_check(self):
+    def check_preferred_suites(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -239,7 +247,7 @@ class tlschecker:
 
 
     #@step(u'Strict TLS headers are seen')
-    def strict_tls_headers_check(context):
+    def check_strict_tls_headers(context):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -250,7 +258,7 @@ class tlschecker:
             "HTTP Strict Transport Security header not observed"
     
     #@step(u'server has no Heartbleed vulnerability')
-    def heartbleed_check(self):
+    def check_heartbleed(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -261,7 +269,7 @@ class tlschecker:
             "Server is vulnerable for Heartbleed"
     
     #@step(u'certificate does not use SHA-1')
-    def sha1_check(self):
+    def check_sha1(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -272,7 +280,7 @@ class tlschecker:
             "Server is affected by SHA-1 deprecation (sunset)"
     
     #@step(u'the D-H group size is at least "{groupsize}" bits')
-    def dh_group_size_check(self, groupsize):
+    def check_dh_group_size(self, groupsize):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -289,7 +297,7 @@ class tlschecker:
                 "D-H group size less than %d" % groupsize
     
     #@step(u'the certificate is in major root CA trust stores')
-    def trusted_ca_check(self):
+    def check_trusted_ca(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -302,7 +310,7 @@ class tlschecker:
     
     
     #@step(u'the certificate has a matching host name')
-    def cert_matching_hostname_check(self):
+    def check_cert_matching_hostname(self):
         context = self.context
         try:
             root = context.xmloutput.getroot()
@@ -313,7 +321,7 @@ class tlschecker:
             "Certificate subject does not match host name"
         
     #@step(u'the public key size is at least "{keysize}" bits')
-    def public_key_size_check(self, keysize):
+    def check_public_key_size(self, keysize):
         context = self.context
         try:
             root = context.xmloutput.getroot()
