@@ -5,8 +5,7 @@ Copyright (c) 2013-2014 F-Secure
 See LICENSE for details
 """
 
-from behave import *
-from subprocess import check_output
+import subprocess
 from tempfile import NamedTemporaryFile
 import re
 import os
@@ -18,306 +17,323 @@ import dateutil.relativedelta
 import pytz
 from datetime import datetime
 
+from .config import Config
 
-@step('sslyze is correctly installed')
-def step_impl(context):
-    context.output = check_output([context.sslyze_location, '--version'])
-    assert "0.12.0" in context.output, "SSLyze version 0.12 is required"
+class PythonSslyze(object):
+    def __init__(self,path):
+        self.path = path
+        # check that sslyze is the correct version
+        try:
+            output = subprocess.check_output([path, "--version"])
+            if b"0.13.6" not in output:
+                raise ValueError("Didn't find version 0.13.6 of sslyze in %s" % path)
+        except (subprocess.CalledProcessError, OSError) as e:
+            raise ValueError("Couldn't execute sslyze from %s: %s" % (path, e))
 
+    def run(self,target):
+        target.xmloutputs = {}
+        # run sslyze separately for different protocols
+        for proto in target.protocols.keys():
+            target.xmloutputs[proto] = self.run_single(target,proto)
 
-@step('target host and port in "{host}" and "{port}"')
-def step_impl(context, host, port):
-    # Store target host, port for future use
-    try:
-        context.feature.host = os.environ[host]
-    except KeyError:
-        assert False, "Hostname not defined in %s" % host
-    try:
-        context.feature.port = os.environ[port]
-    except KeyError:
-        assert False, "Port number not defined in %s" % port
-    assert True
+    def run_single(self,target,proto):
+        # run sslyze against a host and return xml output
+        # this could be done with the sslyze python library
+        xmloutfile = NamedTemporaryFile(delete=False)
+        # remove the lock on the temporary file
+        xmloutfile.close()
+        try:
+            subprocess.check_output([self.path,"--%s" % proto.lower(),
+                "--compression", "--reneg",
+                "--heartbleed", "--xml_out=" + xmloutfile.name,
+                "--certinfo_full", "--hsts",
+                "--http_get", "--sni=%s" % target.host,
+                "%s:%s" % (target.host, target.port)])
+            xml = ET.parse(xmloutfile.name)
+            #print(ET.dump(xml))
+        except subprocess.CalledProcessError as e:
+            raise ValueError("Couldn't execute sslyze: %s" % e)
+        except ET.ParseError as e:
+            raise ValueError("Error parsing xml output from sslyze: %s" % e)
+        finally:
+            os.unlink(xmloutfile.name)
+        return xml
 
+class Checker(object):
+    def __init__(self):
+        # configuration is at self.config
+        pass
 
-@given(u'target host "{host}" and port "{port}"')
-def step_impl(context, host, port):
-    assert host != "", "Hostname not defined"
-    assert port != "", "Port number not defined"
-    context.feature.host = host
-    context.feature.port = port
-    assert True
+    def run(self,target):
+        for proto in target.protocols.keys():
+            if target.protocols[proto]:
+                self.run_checks(target,proto)
+            else:
+                self.proto_disabled(target.xmloutputs[proto],target)
 
+    def run_checks(self,target,proto):
+        if not self.config:
+            raise ValueError("Missing configuration for Tlschecker")
+        self.xml = target.xmloutputs[proto]
+        self.proto_enabled(target)
+        self.check_cert_begin()
+        self.check_cert_end(self.config.days_valid)
+        self.compression_disabled()
+        self.secure_reneg()
+        if len(self.config.suite_preferred):
+            self.cipher_suites_preferred()
+        if len(self.config.suite_blacklist):
+            self.cipher_suites_disabled()
+        if len(self.config.suite_whitelist):
+            self.cipher_suites_enabled()
+        self.strict_tls_headers()
+        self.heartbleed()
+        self.sha1()
+        self.check_dh_group_size(self.config.dh_group_size)
+        self.trusted_ca()
+        self.matching_hostname()
+        self.check_public_key_size(self.config.public_key_size)
 
-@step(u'a TLS connection can be established')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    # The connection target should have been resolved
-    # The .//foo notation is an Xpath
-    assert len(root.findall('.//invalidTargets')) == 1, \
-        "Target system did not resolve or could not connect"
-    for error in root.findall('.//errors'):
-        # There should be no connection errors
-        assert len(error) == 0, \
-            "Errors found creating a connection to %s:%s" % (context.feature.host, context.feature.port)
-    num_acceptedsuites = 0
-    for acceptedsuites in root.findall('.//acceptedCipherSuites'):
-        num_acceptedsuites += len(acceptedsuites)
-    # If there are more than zero accepted suites (for any enabled protocol)
-    # the connection was successful
-    assert num_acceptedsuites > 0, \
-        "No acceptable cipher suites found at %s:%s" % (context.feature.host, context.feature.port)
+    # make sure connection is successful
+    def proto_enabled(self,target):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
 
+        # The connection target should have been resolved
+        # The .//foo notation is an Xpath
+        assert len(root.findall('.//invalidTargets')) == 1, \
+            "Target system did not resolve or could not connect"
+        for error in root.findall('.//errors'):
+            # There should be no connection errors
+            assert len(error) == 0, \
+                "Errors found creating a connection to %s:%s" % (target.host, target.port)
+        num_acceptedsuites = 0
+        for acceptedsuites in root.findall('.//acceptedCipherSuites'):
+            num_acceptedsuites += len(acceptedsuites)
+        # If there are more than zero accepted suites (for any enabled protocol)
+        # the connection was successful
+        assert num_acceptedsuites > 0, \
+            "No acceptable cipher suites found at %s:%s" % (target.host, target.port)
 
-@step(u'the certificate is in major root CA trust stores')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    certificate = root.findall(".//pathValidation")
-    for pathvalidation in certificate:
-        assert pathvalidation.get("validationResult") == 'ok', "Certificate not in trust store %s" % pathvalidation.get(
-            "usingTrustStore")
+    def proto_disabled(self,xml,target):
+        try:
+            root = xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        num_suites = 0
+        for suites in root.findall('.//acceptedCipherSuites'):
+            num_suites += len(suites)
+        for suites in root.findall('.//preferredCipherSuite'):
+            num_suites += len(suites)
+        # If there are zero accepted and preferred suites, connection was
+        # not successful
+        assert num_suites == 0, \
+            "An acceptable cipher suite was found (= a connection was made)."
 
+    # check that time is more than validity start time
+    def check_cert_begin(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        notbefore_string = root.find('.//validity/notBefore').text
+        notbefore = dateutil.parser.parse(notbefore_string)
+        assert notbefore <= datetime.utcnow().replace(tzinfo=pytz.utc), \
+            "Server certificate is not yet valid (begins %s)" % notbefore_string
 
-@step(u'the certificate has a matching host name')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    certificate = root.find(".//hostnameValidation")
-    assert certificate.get("certificateMatchesServerHostname") == 'True', \
-        "Certificate subject does not match host name"
-
-
-@step(u'the D-H group size is at least "{groupsize}" bits')
-def step_impl(context, groupsize):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    keyexchange = root.find(".//keyExchange")
-    if keyexchange is None:
-       # Kudos bro!
-        return
-    keytype = keyexchange.get('Type')
-    realgroupsize = keyexchange.get('GroupSize')
-    if keytype == 'DH':
-        assert int(groupsize) <= int(realgroupsize), \
-            "D-H group size less than %s" % groupsize
-
-
-@step(u'the public key size is at least "{keysize}" bits')
-def step_impl(context, keysize):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    publickeysize = root.find(".//publicKeySize").text
-    assert int(keysize) <= int(publickeysize[0]), \
-        "Public key size less than %s" % keysize
-
-
-@step(u'a "{proto}" connection is made')
-def step_impl(context, proto):
-    host = context.feature.host
-    port = context.feature.port
-    xmloutfile = NamedTemporaryFile(delete=False)
-    xmloutfile.close()  # Free the lock on the XML output file
-    context.output = check_output([context.sslyze_location, "--%s" % proto.lower(),
-                                   "--compression", "--reneg",
-                                   "--chrome_sha1", "--heartbleed",
-                                   "--xml_out=" + xmloutfile.name,
-                                   "--certinfo=full",
-                                   "--hsts",
-                                   "--http_get",
-                                   "--sni=%s" % host,
-                                   "%s:%s" % (host, port)])
-    context.xmloutput = ET.parse(xmloutfile.name)
-    os.unlink(xmloutfile.name)
-
-
-@step(u'a TLS connection cannot be established')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    num_suites = 0
-    for suites in root.findall('.//acceptedCipherSuites'):
-        num_suites += len(suites)
-    for suites in root.findall('.//preferredCipherSuite'):
-        num_suites += len(suites)
-    # If there are zero accepted and preferred suites, connection was
-    # not successful
-    assert num_suites == 0, \
-        "An acceptable cipher suite was found (= a connection was made)."
-
-
-@step(u'compression is not enabled')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    compr = root.findall('.//compressionMethod')
-    compression = False
-    for comp_method in compr:
-        if comp_method.get('isSupported') != 'False':
-            compression = True
-    assert compression is False, "Compression is enabled"
+    # check that certificate is still valid at least for {days}
+    def check_cert_end(self, days):
+        #days = int(days)
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        notafter_string = root.find('.//validity/notAfter').text
+        notafter = dateutil.parser.parse(notafter_string)
+        notafter = notafter - dateutil.relativedelta.relativedelta(days=+days)
+        assert notafter >= datetime.utcnow().replace(tzinfo=pytz.utc), \
+            "Server certificate will not be valid in %s days (expires %s)" % \
+            (days, notafter_string)
 
 
-@step(u'secure renegotiation is supported')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    reneg = root.find('.//reneg/sessionRenegotiation')
-    assert reneg is not None, \
-        "Renegotiation is not supported"
-    assert reneg.get('canBeClientInitiated') == 'False', \
-        "Client side renegotiation is enabled (shouldn't be)"
-    assert reneg.get('isSecure') == 'True', \
-        "Secure renegotiation is not supported (should be)"
+    # ensure compression is disabled
+    def compression_disabled(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        compr = root.findall('.//compressionMethod')
+        compression = False
+        for comp_method in compr:
+            if comp_method.get('isSupported') != 'False':
+                compression = True
+        assert compression is False, "Compression is enabled"
 
 
-@step(u'the connection results are stored')
-def step_impl(context):
-    try:
-        context.feature.xmloutput = context.xmloutput
-    except AttributeError:
-        assert False, "No connection results found. Perhaps a connection problem to %s:%s" % (
-            context.feature.host, context.feature.port)
+    # check secure renegotiation
+    def secure_reneg(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        reneg = root.find('.//reneg/sessionRenegotiation')
+        assert reneg is not None, \
+            "Renegotiation is not supported"
+        assert reneg.get('canBeClientInitiated') == 'False', \
+            "Client side renegotiation is enabled (shouldn't be)"
+        assert reneg.get('isSecure') == 'True', \
+            "Secure renegotiation is not supported (should be)"
+
+    # check preferred suites
+    def cipher_suites_preferred(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        acceptable_suites = self.config.suite_preferred
+        acceptable_suites_regex = "(" + ")|(".join(acceptable_suites) + ")"
+        # The regex must match the preferred suite for every protocol
+        found = True
+        accepted_suites = root.findall('.//preferredCipherSuite/cipherSuite')
+        for accepted_suite in accepted_suites:
+            if re.search(acceptable_suites_regex, accepted_suite.get("name")) is None:
+                found = False
+        assert found, "Not all of the preferred cipher suites were accepted"
 
 
-@step(u'a stored connection result')
-def step_impl(context):
-    try:
-        context.xmloutput = context.feature.xmloutput
-    except AttributeError:
-        assert False, "A stored connection result was not found. Perhaps a connection problem to %s:%s" % (
-            context.feature.host, context.feature.port)
+    def cipher_suites_disabled(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+
+        suite_blacklist_regex = "(" + ")|(".join(self.config.suite_blacklist) + ")"
+        # The regex should not match to any accepted suite for any protocol
+        passed = True
+        found_list = ""
+        for accepted_suites in root.findall('.//acceptedCipherSuites'):
+            for suite in accepted_suites:
+                if re.search(suite_blacklist_regex, suite.get("name")) is not None:
+                    passed = False
+                    found_list = found_list + "%s " % suite.get("name")
+        assert passed, "Blacklisted cipher suite(s) found: %s" % found_list
+
+    def cipher_suites_enabled(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        acceptable_suites = self.config.suite_whitelist
+
+        acceptable_suites_regex = "(" + ")|(".join(acceptable_suites) + ")"
+        # The regex must match at least once for some protocol
+        found = False
+        for accepted_suites in root.findall('.//acceptedCipherSuites'):
+            for suite in accepted_suites:
+                if re.search(acceptable_suites_regex, suite.get("name")) is not None:
+                    found = True
+        assert found, "None of listed cipher suites were enabled"
+
+    # TLS headers are set to strict
+    def strict_tls_headers(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        hsts = root.find('.//httpStrictTransportSecurity')
+        assert hsts.get('isSupported') == 'True', \
+            "HTTP Strict Transport Security header not observed"
+    
+    # Heartbleed check
+    def heartbleed(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        heartbleed = root.find('.//openSslHeartbleed')
+        assert heartbleed.get('isVulnerable') == 'False', \
+            "Server is vulnerable for Heartbleed"
+    
+    # check that the certrificate doesn't use SHA1
+    def sha1(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        sha1 = root.find('.//certificateChain')
+        assert sha1.get('hasSha1SignedCertificate') == "False", \
+            "Server is affected by SHA-1 deprecation (sunset)"
+    
+    # D-H group size is at least {groupsize}
+    def check_dh_group_size(self, groupsize):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        keyexchange = root.find(".//keyExchange")
+        if keyexchange is None:
+        # Kudos bro!
+            return
+        keytype = keyexchange.get('Type')
+        realgroupsize = keyexchange.get('GroupSize')
+        if keytype == 'DH':
+            assert groupsize <= int(realgroupsize), \
+                "D-H group size less than %d" % groupsize
+    
+    # check that the certificate is in major root CA trust stores
+    def trusted_ca(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            assert False, "No stored TLS connection result set was found."
+        certificate = root.findall(".//pathValidation")
+        for pathvalidation in certificate:
+            assert pathvalidation.get("validationResult") == 'ok', "Certificate not in trust store %s" % pathvalidation.get(
+                "usingTrustStore")
+    
+    
+    # check that certificate has a matching hostname
+    def matching_hostname(self):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        certificate = root.find(".//hostnameValidation")
+        assert certificate.get("certificateMatchesServerHostname") == 'True', \
+            "Certificate subject does not match host name"
+        
+    # ensure that the public key of the cert is at least {keysize} bits
+    def check_public_key_size(self, keysize):
+        try:
+            root = self.xml.getroot()
+        except AttributeError:
+            raise ValueError("No stored TLS connection result set was found.")
+        publickeysize = root.find(".//publicKeySize").text
+        assert int(keysize) <= int(publickeysize), \
+            "Public key size %s less than %s" % (publickeysize,keysize)
 
 
-@step(u'the following cipher suites are disabled')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    # Extract blacklisted suites from behave's table & create a regex
-    suite_blacklist = []
-    for row in context.table:
-        suite_blacklist.append(row['cipher suite'])
-    suite_blacklist_regex = "(" + ")|(".join(suite_blacklist) + ")"
-    # The regex should not match to any accepted suite for any protocol
-    passed = True
-    found_list = ""
-    for accepted_suites in root.findall('.//acceptedCipherSuites'):
-        for suite in accepted_suites:
-            if re.search(suite_blacklist_regex, suite.get("name")) is not None:
-                passed = False
-                found_list = found_list + "%s " % suite.get("name")
-    assert passed, "Blacklisted cipher suite(s) found: %s" % found_list
+class Target(object):
+    def __init__(self,host,port,protocols):
+        self.host = host
+        self.port = port
+        # protocols that should be enabled or disabled
+        self.protocols = protocols
 
+class MittnTLSChecker(object):
+    def __init__(self,config_path="./mittn.conf",sslyze_path=None,
+            config=None, checker=None):
+        self.config = config or Config(config_path)
+        self.sslyze = PythonSslyze(self.config.sslyze_path)
+        self.checker = checker or Checker()
+        self.checker.config = self.config
 
-@step(u'at least one the following cipher suites is enabled')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    acceptable_suites = []
-    for row in context.table:
-        acceptable_suites.append(row['cipher suite'])
-    acceptable_suites_regex = "(" + ")|(".join(acceptable_suites) + ")"
-    # The regex must match at least once for some protocol
-    found = False
-    for accepted_suites in root.findall('.//acceptedCipherSuites'):
-        for suite in accepted_suites:
-            if re.search(acceptable_suites_regex, suite.get("name")) is not None:
-                found = True
-    assert found, "None of listed cipher suites were enabled"
+    def run(self,host,port=443):
+        target = Target(host,port,self.config.protocols)
 
+        # puts results into target.xmloutputs[proto] dict
+        self.sslyze.run(target)
 
-@step(u'one of the following cipher suites is preferred')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    acceptable_suites = []
-    for row in context.table:
-        acceptable_suites.append(row['cipher suite'])
-    acceptable_suites_regex = "(" + ")|(".join(acceptable_suites) + ")"
-    # The regex must match the preferred suite for every protocol
-    found = True
-    accepted_suites = root.findall('.//preferredCipherSuite/cipherSuite')
-    for accepted_suite in accepted_suites:
-        if re.search(acceptable_suites_regex, accepted_suite.get("name")) is None:
-            found = False
-    assert found, "None of the listed cipher suites were preferred"
-
-
-@step(u'Time is more than validity start time')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    notbefore_string = root.find('.//validity/notBefore').text
-    notbefore = dateutil.parser.parse(notbefore_string)
-    assert notbefore <= datetime.utcnow().replace(tzinfo=pytz.utc), \
-        "Server certificate is not yet valid (begins %s)" % notbefore_string
-
-
-@step(u'Time plus "{days}" days is less than validity end time')
-def step_impl(context, days):
-    days = int(days)
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    notafter_string = root.find('.//validity/notAfter').text
-    notafter = dateutil.parser.parse(notafter_string)
-    notafter = notafter - dateutil.relativedelta.relativedelta(days=+days)
-    assert notafter >= datetime.utcnow().replace(tzinfo=pytz.utc), \
-        "Server certificate will not be valid in %s days (expires %s)" % \
-        (days, notafter_string)
-
-
-@step(u'Strict TLS headers are seen')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    hsts = root.find('.//httpStrictTransportSecurity')
-    assert hsts.get('isSupported') == 'True', \
-        "HTTP Strict Transport Security header not observed"
-
-@step(u'server has no Heartbleed vulnerability')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    heartbleed = root.find('.//openSslHeartbleed')
-    assert heartbleed.get('isVulnerable') == 'False', \
-        "Server is vulnerable for Heartbleed"
-
-@step(u'certificate does not use SHA-1')
-def step_impl(context):
-    try:
-        root = context.xmloutput.getroot()
-    except AttributeError:
-        assert False, "No stored TLS connection result set was found."
-    sha1 = root.find('.//chromeSha1Deprecation')
-    assert sha1.get('isServerAffected') == "False", \
-        "Server is affected by SHA-1 deprecation (sunset)"
+        self.checker.run(target)
