@@ -12,6 +12,7 @@ avspassword.sh
 # Backups
 \#*
 *~
+*.swp
 
 # C extensions
 *.so
