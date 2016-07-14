@@ -21,22 +21,22 @@ class httpfuzzer:
     def __init__(self):    
         self.context = LoadConfig("httpfuzzer")
         self.check_baseline_database()
+        self.check_radamsa_installation()
         self.check_valid_case_instrumentation()
         self.check_timeout()
-        self.check_radamsa_installation()
 
-    def add_valid_json_case(self, uri, submissions, method):
+    def add_target(self, uri, method, submission, type):
         self.store_uri(uri)
-        self.store_json_submission(submissions, method)
+        self.store_submission(submission, method, type)
 
     def fuzz(self):
         self.perform_static_injection()
         self.store_bad_return_codes()
         self.report_findings()
 
-################################################
-### functions related to setup fo the httpfuzzer        
-################################################
+#############################################
+### functions related to setup the httpfuzzer        
+#############################################
 
     def check_baseline_database(self):
         """Test that we can connect to a database. As a side effect,
@@ -98,8 +98,8 @@ class httpfuzzer:
         # Unicode library will barf on fuzzed data
         self.context.targeturi = str(uri)
 
-    def store_form_submission(self, submission, method):
-        """For static injection, store a valid form where elements are replaced with
+    def store_submission(self, submission, method, type):
+        """For static injection, store a submission where elements are replaced with
         injections and test it once. This is also used for the valid case
         instrumentation.
         """
@@ -112,48 +112,20 @@ class httpfuzzer:
         # Unserialise into a data structure and store in a list
         # (one valid case is just a special case of providing
         # several valid cases)
-        self.context.submission = [urlparse2.parse_qs(submission)]
+        if   type == 'urlencode':
+            self.context.submission = [urlparse2.parse_qs(submission)]
+            self.context.content_type = 'application/x-www-form-urlencoded; charset=utf-8'
+        elif type == 'url-parameters':
+            self.context.submission = [url_to_dict(submission)]
+            self.context.content_type = 'application/x-www-form-urlencoded; charset=utf-8'
+        elif type == 'json':
+            self.context.submission = [json.loads(submission)]
+            self.context.content_type = 'application/json'
+        
+        self.context.type = type  # Used downstream for selecting encoding
         self.context.submission_method = method
-        self.context.type = 'urlencode'  # Used downstream for selecting encoding
-        self.context.content_type = 'application/x-www-form-urlencoded; charset=utf-8'
         test_valid_submission(self.context)
 
-    def store_url_submission(self, submission):
-        """For static injection, get the url parameters (semicolon
-        separated URL parameters)
-        """
-    
-        if hasattr(self.context, 'timeout') is False:
-            self.context.timeout = 5  # Sensible default
-        if hasattr(self.context, 'targeturi') is False:
-            assert False, "Target URI not specified"
-    
-           # Unserialise into a data structure and store in a list
-        # (one valid case is just a special case of providing
-        # several valid cases)
-        self.context.submission = [url_to_dict(submission)]
-        self.context.submission_ethod = 'GET'
-        self.context.type = 'url-parameters'  # Used downstream for selecting encoding
-        self.context.content_type = 'application/x-www-form-urlencoded; charset=utf-8'
-        test_valid_submission(self.context)
-
-    def store_json_submission(self, valid_json, method):
-        """Store an example of a valid submission
-        """
-    
-        if hasattr(self.context, 'timeout') is False:
-            self.context.timeout = 5  # Sensible default
-        if hasattr(self.context, 'targeturi') is False:
-            assert False, "Target URI not specified"
-    
-        # Unserialise into a data structure and store in a list
-        # (one valid case is just a special case of providing
-        # several valid cases)
-        self.context.submission = [json.loads(valid_json)]
-        self.context.submission_method = method
-        self.context.type = 'json'  # Used downstream to select encoding, etc.
-        self.context.content_type = 'application/json'
-        test_valid_submission(self.context)
 
 #@given(u'valid JSON submissions using "{method}" method')
 #def step_impl(context, method):
