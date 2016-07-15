@@ -61,7 +61,7 @@ class Target(object):
         # protocols that should be enabled or disabled
         self.protocols = protocols
 
-class MittnTLSChecker(object):
+class MittnTlsChecker(object):
     def __init__(self,config_path="./mittn.conf",sslyze_path=None,
             config=None, checker=None):
         # Config uses defaults
