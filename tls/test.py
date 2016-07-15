@@ -1,4 +1,4 @@
-from tls.steps import MittnTLSChecker, Config
+from mittn import MittnTlsChecker, Config
 
 c = Config('mittn.conf')
 
@@ -6,5 +6,5 @@ c = Config('mittn.conf')
 c.suites_preferred = []
 c.suites_enabled = []
 
-t = MittnTLSChecker(config=c)
+t = MittnTlsChecker(config=c)
 t.run('www.google.com')
