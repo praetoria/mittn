@@ -61,70 +61,54 @@ class test_archiver(unittest.TestCase):
         a.add_issue(issue)
         assert a.new_issue_count() == 2
 
+
     def test_false_positive_detection(self):
         # Test whether false positives in database are identified properly
-        response = Issue(
-            scenario_id = 1,
-            req_headers = b'headers',
-            req_body = b'body',
-            url = 'url',
-            req_method = 'method',
-            timestamp = datetime.datetime.utcnow(),
-            test_runner_host = 'testhost',
-            server_protocol_error = False,
-            server_timeout = False,
-            server_error_text_detected = False,
-            server_error_text_matched = 'matched_text',
-            resp_statuscode = 'statuscode',
-            resp_headers = b'resp_headers',
-            resp_body = b'resp_body',
-            resp_history = b'resp_history'
-        )
-
         # First add one false positive and try checking against it
         a = Archiver(self.db_url)
         a.init()
-        a.add_issue(response)
-
-        self.assertEqual(a.known_false_positive(response),
+        
+        test_issue = default_issue()
+        a.add_issue(test_issue)
+        self.assertEqual(a.known_false_positive(test_issue),
                          True, "Duplicate false positive not detected")
 
         # Change one of the differentiating fields, and test, and
         # add the tested one to the database.
-        response = copy.deepcopy(response)
-        response.scenario_id = 2 # Non-duplicate
-        self.assertEqual(a.known_false_positive(response),
+        test_issue = default_issue()
+        test_issue.scenario_id = 2 # Non-duplicate
+        self.assertEqual(a.known_false_positive(test_issue),
                          False, "Not a duplicate: scenario_id different")
-        a.add_issue(response)
+        a.add_issue(test_issue)
 
         # Repeat for all the differentiating fields
-        response = copy.deepcopy(response)
-        response.server_protocol_error = 'Error text'
-        self.assertEqual(a.known_false_positive(response),
+        test_issue = default_issue()
+        test_issue.server_protocol_error = 'Error text'
+        self.assertEqual(a.known_false_positive(test_issue),
                          False, "Not a duplicate: server_protocol_error different")
-        a.add_issue(response)
+        a.add_issue(test_issue)
 
-        response = copy.deepcopy(response)
-        response.resp_statuscode = '500'
-        self.assertEqual(a.known_false_positive(response),
+        test_issue = default_issue() # Non-duplicate
+        test_issue.resp_statuscode = '500'
+        self.assertEqual(a.known_false_positive(test_issue),
                          False, "Not a duplicate: resp_statuscode different")
-        a.add_issue(response)
+        a.add_issue(test_issue)
 
-        response = copy.deepcopy(response)
-        response.server_timeout = True
-        self.assertEqual(a.known_false_positive(response),
+        test_issue = default_issue() # Non-duplicate
+        test_issue.server_timeout = True
+        self.assertEqual(a.known_false_positive(test_issue),
                          False, "Not a duplicate: server_timeout different")
-        a.add_issue(response)
+        a.add_issue(test_issue)
 
-        response = copy.deepcopy(response)
-        response.server_error_text_detected = True
-        self.assertEqual(a.known_false_positive(response),
+        test_issue = default_issue() # Non-duplicate
+        test_issue.server_error_text_detected = True
+        self.assertEqual(a.known_false_positive(test_issue),
                          False, "Not a duplicate: server_error_text_detected different")
-        a.add_issue(response)
+        a.add_issue(test_issue)
 
         # Finally, test the last one again twice, now it ought to be
         # reported back as a duplicate
-        self.assertEqual(a.known_false_positive(response),
+        self.assertEqual(a.known_false_positive(test_issue),
                          True, "A duplicate case not detected")
 
     def tearDown(self):
@@ -135,3 +119,22 @@ class test_archiver(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+def default_issue():
+    return Issue(
+        scenario_id = 1,
+        req_headers = b'headers',
+        req_body = b'body',
+        url = 'url',
+        req_method = 'method',
+        timestamp = datetime.datetime.utcnow(),
+        test_runner_host = 'testhost',
+        server_protocol_error = False,
+        server_timeout = False,
+        server_error_text_detected = False,
+        server_error_text_matched = 'matched_text',
+        resp_statuscode = 'statuscode',
+        resp_headers = b'resp_headers',
+        resp_body = b'resp_body',
+        resp_history = b'resp_history'
+    )
