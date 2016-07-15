@@ -65,6 +65,8 @@ class Checker(object):
         pass
 
     def run(self,target):
+        # check that disabled protocols are disabled
+        # and run checks for enabled protocol(s)
         for proto in target.protocols.keys():
             if target.protocols[proto]:
                 self.run_checks(target,proto)
@@ -74,6 +76,8 @@ class Checker(object):
     def run_checks(self,target,proto):
         if not self.config:
             raise ValueError("Missing configuration for Tlschecker")
+
+        # get results of the sslyze run for this protocol
         self.xml = target.xmloutputs[proto]
         self.proto_enabled(target)
         self.check_cert_begin()

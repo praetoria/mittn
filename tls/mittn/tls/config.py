@@ -1,11 +1,11 @@
 from configparser import ConfigParser
 
 class Config:
-    def __init__(self,path=None,sslyze_path=None,protocols=None):
+    def __init__(self,path=None):
 
         ## default configuration for tlschecker ##
 
-        self.protocols = protocols or \
+        self.protocols = \
             {"SSLv2": False,"SSLv3": False,"TLSv1_2": True}
 
         self.suites_preferred = [
@@ -31,7 +31,7 @@ class Config:
         self.dh_group_size = 2048
         self.public_key_size = 2048
         self.path = path
-        self.sslyze_path = sslyze_path or "/usr/bin/sslyze"
+        self.sslyze_path = "/usr/bin/sslyze"
 
         ## file based configuration ##
         config = ConfigParser()
@@ -43,6 +43,8 @@ class Config:
             "suites_enabled",
             "suites_preferred",
         ]
+
+        ## config file based configuration ##
         for section in ['mittn','tlschecker']:
             if section in config:
                 for key in config[section]:
