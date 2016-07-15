@@ -200,7 +200,7 @@ class Checker(object):
         for accepted_suite in accepted_suites:
             if re.search(acceptable_suites_regex, accepted_suite.get("name")) is None:
                 found = False
-        assert found, "Not all of the preferred cipher suites were accepted"
+        assert found, "Not all of the preferred cipher suites were on our list"
 
 
     def cipher_suites_disabled(self):
