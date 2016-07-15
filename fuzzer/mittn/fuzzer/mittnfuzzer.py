@@ -25,4 +25,16 @@ class MittnFuzzer(object):
         self.checker = checker or Checker()
         self.client = client or Client()
 
-        self.archiver.init()
+	def init(self):
+		#create and test database connection
+		self.archiver.init()
+		#configure how issues are created
+		pass
+
+	def add_target():
+		#add target objects that mittn will be ran against
+		pass
+
+	def fuzz():
+		#fuzz and inject all the added targets
+		pass
