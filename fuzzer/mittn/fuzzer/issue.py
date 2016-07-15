@@ -39,13 +39,13 @@ class Issue(BaseModel):
     server_error_text_matched = Column(types.String, default='')
 
     req_method = Column(types.String, default='')
-    req_headers = Column(types.LargeBinary, default='')
-    req_body = Column(types.LargeBinary, default='')
+    req_headers = Column(types.LargeBinary, default=b'')
+    req_body = Column(types.LargeBinary, default=b'')
 
     resp_statuscode = Column(types.String, default='')
-    resp_headers = Column(types.LargeBinary, default='')
-    resp_body = Column(types.LargeBinary, default='')
-    resp_history = Column(types.LargeBinary, default='')
+    resp_headers = Column(types.LargeBinary, default=b'')
+    resp_body = Column(types.LargeBinary, default=b'')
+    resp_history = Column(types.LargeBinary, default=b'')
 
     @staticmethod
     def from_resp_or_exc(scenario, resp_or_exc):

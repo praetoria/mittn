@@ -37,9 +37,9 @@ class test_archiver(unittest.TestCase):
             issue_no=1,
             new_issue=True,
             timestamp=datetime.datetime(2016,1,1),
-            test_runner_host='testhost'.encode('UTF-8'),
-            scenario_id='test-scenario'.encode('UTF-8'),
-            url='test.io'.encode('UTF-8'),
+            test_runner_host='testhost',
+            scenario_id='test-scenario',
+            url='test.io',
             server_timeout=False,
             server_error_text_detected=False
         )
