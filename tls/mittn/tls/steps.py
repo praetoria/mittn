@@ -80,11 +80,12 @@ class Checker(object):
         self.check_cert_end(self.config.days_valid)
         self.compression_disabled()
         self.secure_reneg()
-        if len(self.config.suite_preferred):
+        # only check if the lists have something to check
+        if len(self.config.suites_preferred):
             self.cipher_suites_preferred()
-        if len(self.config.suite_blacklist):
+        if len(self.config.suites_disabled):
             self.cipher_suites_disabled()
-        if len(self.config.suite_whitelist):
+        if len(self.config.suites_enabled):
             self.cipher_suites_enabled()
         self.strict_tls_headers()
         self.heartbleed()
@@ -192,7 +193,7 @@ class Checker(object):
             root = self.xml.getroot()
         except AttributeError:
             raise ValueError("No stored TLS connection result set was found.")
-        acceptable_suites = self.config.suite_preferred
+        acceptable_suites = self.config.suites_preferred
         acceptable_suites_regex = "(" + ")|(".join(acceptable_suites) + ")"
         # The regex must match the preferred suite for every protocol
         found = True
@@ -209,7 +210,7 @@ class Checker(object):
         except AttributeError:
             raise ValueError("No stored TLS connection result set was found.")
 
-        suite_blacklist_regex = "(" + ")|(".join(self.config.suite_blacklist) + ")"
+        suite_blacklist_regex = "(" + ")|(".join(self.config.suites_disabled) + ")"
         # The regex should not match to any accepted suite for any protocol
         passed = True
         found_list = ""
@@ -225,7 +226,7 @@ class Checker(object):
             root = self.xml.getroot()
         except AttributeError:
             raise ValueError("No stored TLS connection result set was found.")
-        acceptable_suites = self.config.suite_whitelist
+        acceptable_suites = self.config.suites_enabled
 
         acceptable_suites_regex = "(" + ")|(".join(acceptable_suites) + ")"
         # The regex must match at least once for some protocol

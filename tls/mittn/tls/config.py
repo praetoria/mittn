@@ -3,17 +3,17 @@ from configparser import ConfigParser
 class Config:
     def __init__(self,path=None,sslyze_path=None,protocols=None):
 
-        ## default configuration ##
+        ## default configuration for tlschecker ##
 
         self.protocols = protocols or \
             {"SSLv2": False,"SSLv3": False,"TLSv1_2": True}
 
-        self.suite_preferred = [
+        self.suites_preferred = [
                 "DHE.*GCM", "DHE.*AES256",
                 "ECDHE.*GCM","ECDHE.*AES256",
                 ]
 
-        self.suite_blacklist = [
+        self.suites_disabled = [
                 "EXP-","ADH","AECDH",
                 "NULL","DES-CBC-","RC2",
                 "RC5","MD5","CAMELLIA",
@@ -22,7 +22,7 @@ class Config:
                 "DES-CBC3","RC4",
                 ]
 
-        self.suite_whitelist = [
+        self.suites_enabled = [
                 "DHE-","ECDHE-",
                 ]
 
@@ -39,9 +39,9 @@ class Config:
 
         # comma separated list type attributes in config file
         list_attributes = [
-            "suite_blacklist",
-            "suite_whitelist",
-            "suite_preferred",
+            "suites_disabled",
+            "suites_enabled",
+            "suites_preferred",
         ]
         for section in ['mittn','tlschecker']:
             if section in config:
