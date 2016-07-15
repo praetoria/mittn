@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine#, Column, types
 from sqlalchemy.orm.session import sessionmaker
 
+from mittn.fuzzer.issue import Issue
+
 class Archiver(object):
 
     def __init__(self, db_url=None):
@@ -22,7 +24,7 @@ class Archiver(object):
         self.session = Session()
 
         # Create DB tables (has no effect, if they already exist)
-        Base.metadata.create_all(db_engine)
+        Issue.metadata.create_all(db_engine)
 
     def known_false_positive(self, issue):
         """Check whether issue already exists in the database (usually a "false positive" if it does exist).
