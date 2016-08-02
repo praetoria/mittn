@@ -55,7 +55,7 @@ class PythonSslyze(object):
 
 
 class Target(object):
-    """Contains hostname, portnumber and a dict
+    """ Contains hostname, portnumber and a dict
         of protocols that should be enabled/disabled.
 
         Instances of this class are also used for saving
@@ -86,7 +86,7 @@ class MittnTlsChecker(object):
 
         # checker checks for misconfigurations
         # by analyzing the xml produced by PythonSslyze
-        self.checker = checker or Checker()
+        self.checker = checker or Checker(config)
         self.checker.config = self.config
 
     def run(self,host,port=443):
@@ -96,4 +96,4 @@ class MittnTlsChecker(object):
         self.sslyze.run(target)
 
         # perform checks on the output from sslyze
-        self.checker.run(target)
+        return self.checker.run(target)
