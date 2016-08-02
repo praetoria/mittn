@@ -1,4 +1,4 @@
-import urllib
+from urllib import parse
 from collections import OrderedDict
 
 import six
@@ -29,6 +29,6 @@ def dict_to_urlparams(paramdict, delimiter=';'):
             if v is None:  # As a result of injection
                 values.append('')
             else:
-                values.append(urllib.quote_plus(str(v)))
-        params.append(urllib.quote_plus(key) + '=' + ','.join(values))
+                values.append(parse.quote_plus(str(v)))
+        params.append(parse.quote_plus(key) + '=' + ','.join(values))
     return delimiter.join(params)

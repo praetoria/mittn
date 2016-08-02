@@ -38,21 +38,9 @@ class MittnFuzzer(object):
         pass
 
     def fuzz(self):
-        methods = ['GET'] #this would really come from the configuration file!
+        methods = ['GET','POST'] #this would really come from the configuration file!
         #fuzz and inject all the added targets
         for target in self.targets:
-            for method in methods:
-                for payload in self.generator.generate_anomalies(target.valid_submission, [target.valid_submission], 10):
-                    self.client.request(
-                        url     = target.uri + str(payload, 'iso-8859-1'),
-                        method  = method,
-                        verify  = False,
-                        timeout = 30
-                    )
-                    #send the submission and check the response
-                    pass
-
-            for submission in self.generator.generate_static():
-                #send the submission and check the response
-                pass
-
+            for payload in self.generator.generate_anomalies(target.valid_submission, [target.valid_submission], 1):
+                for method in methods:
+                    self.client.do_target(target, method, payload)

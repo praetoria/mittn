@@ -1,5 +1,6 @@
 from mittn.fuzzer.static_anomalies import STATIC_ANOMALIES
 import six
+import copy
 import tempfile
 
 class AnomalyGenerator(object):
@@ -116,7 +117,6 @@ class AnomalyGenerator(object):
         raise NotImplemented
 
     def generate_anomalies(self, wireframe, submissions, amount):
-
         # Collect values per key from all submissions
         values = {}
         for submission in submissions:
