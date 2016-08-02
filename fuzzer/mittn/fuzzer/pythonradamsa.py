@@ -1,4 +1,9 @@
 import subprocess
+import tempfile
+import shutil
+import six
+import codecs
+import os
 
 class PythonRadamsa(object):
 
@@ -54,7 +59,7 @@ class PythonRadamsa(object):
                 if isinstance(valid_string, (bool, six.integer_types, float)):
                     valid_string = str(valid_string)
 
-                with codecs.open(tmpfile_path, 'w', 'utf-8') as fh:
+                with codecs.open(tmpfile_path, 'wb', 'utf-8') as fh:
                     fh.write(valid_string)
 
             # Run Radamsa (one execution for all files)
@@ -73,7 +78,7 @@ class PythonRadamsa(object):
             for filename in os.listdir(fuzz_case_directory):
                 # XXX: Radamsa produces even broken bytearrays, so we need to read contents as bytestr!
                 # FIXME: Python 3?
-                with open(os.path.join(fuzz_case_directory, filename), 'r') as fh:
+                with open(os.path.join(fuzz_case_directory, filename), 'rb') as fh:
                     fuzzlist.append(fh.read())
 
         finally:

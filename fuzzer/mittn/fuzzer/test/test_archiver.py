@@ -88,19 +88,19 @@ class test_archiver(unittest.TestCase):
                          False, "Not a duplicate: server_protocol_error different")
         a.add_issue(test_issue)
 
-        test_issue = default_issue() # Non-duplicate
+        test_issue = default_issue()
         test_issue.resp_statuscode = '500'
         self.assertEqual(a.known_false_positive(test_issue),
                          False, "Not a duplicate: resp_statuscode different")
         a.add_issue(test_issue)
 
-        test_issue = default_issue() # Non-duplicate
+        test_issue = default_issue()
         test_issue.server_timeout = True
         self.assertEqual(a.known_false_positive(test_issue),
                          False, "Not a duplicate: server_timeout different")
         a.add_issue(test_issue)
 
-        test_issue = default_issue() # Non-duplicate
+        test_issue = default_issue()
         test_issue.server_error_text_detected = True
         self.assertEqual(a.known_false_positive(test_issue),
                          False, "Not a duplicate: server_error_text_detected different")
