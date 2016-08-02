@@ -1,4 +1,6 @@
 from mittn.fuzzer.static_anomalies import STATIC_ANOMALIES
+import six
+import tempfile
 
 class AnomalyGenerator(object):
 
