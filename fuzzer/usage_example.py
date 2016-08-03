@@ -1,6 +1,8 @@
-from mittn.fuzzer import Target, MittnFuzzer
+from mittn.fuzzer import Target, MittnFuzzer, Config
 
-m = MittnFuzzer()
+c = Config("fuzzer")
+c.db_url = "./db"
+m = MittnFuzzer(config=c)
 m.init()
 t = Target('simple_test',
            'GET',

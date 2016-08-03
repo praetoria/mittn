@@ -13,13 +13,15 @@ from mittn.fuzzer.anomalygenerator import AnomalyGenerator
 from mittn.fuzzer.checker import Checker
 from mittn.fuzzer.client import Client
 from mittn.fuzzer.target import Target
+from mittn.fuzzer.config import Config
 
 class MittnFuzzer(object):
 
-    def __init__(self, db_url=None, radamsa_path='/usr/bin/radamsa',
-                 archiver=None, radamsa=None, generator=None, checker=None, client=None):
-        self.archiver = archiver or Archiver(db_url)
-        radamsa = radamsa or PythonRadamsa(radamsa_path)
+    def __init__(self, archiver=None, radamsa=None, generator=None,
+            checker=None, client=None,config=None):
+        self.config = config or Config("mittn.conf","fuzzer")
+        self.archiver = archiver or Archiver(self.config.db_url)
+        radamsa = radamsa or PythonRadamsa(self.config.radamsa_path)
         self.generator = generator or AnomalyGenerator(radamsa)
         self.checker = checker or Checker()
         self.client = client or Client()
