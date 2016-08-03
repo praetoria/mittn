@@ -1,4 +1,6 @@
 from mittn.fuzzer.utils import urlparams_to_dict
+from urllib import parse
+
 class Target():
     
     def __init__(self, scenario_id, method, uri, submission_type, valid_submission):
@@ -14,4 +16,4 @@ class Target():
             raise NotImplemented
 
         elif self.submission_type == 'urlencode':
-            raise NotImplemented
+            self.valid_submission = parse.parse_qs(valid_submission)

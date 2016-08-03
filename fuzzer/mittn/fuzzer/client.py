@@ -5,7 +5,8 @@ from requests.exceptions import Timeout, RequestException
 from requests.models import Response
 from requests.sessions import Session
 
-from mittn.fuzzer.utils import dict_to_urlparams
+from mittn.fuzzer.utils import *
+
 
 FQDN = socket.getfqdn()
 HOSTNAME = socket.gethostbyname(socket.gethostname())
@@ -27,8 +28,8 @@ class Client(Session):
             'Cache-Control': 'no-cache',
             'User-Agent': 'Mozilla/5.0 (compatible; Mittn HTTP Fuzzer-Injector)',
             #'X-Abuse': 'This is an automatically generated robustness test request from %s [%s]' % (FQDN, HOSTNAME),
-            'Connection': 'close',
-            'X-Valid-Case-Instrumentation': 'This is a valid request that should succeed',
+            'Connection': 'close'
+            #'X-Valid-Case-Instrumentation': 'This is a valid request that should succeed',
         })
 
     def do_target(self, target, method, payload):
@@ -40,9 +41,15 @@ class Client(Session):
                 verify  = False,
                 timeout = 30)
         elif target.submission_type == 'json':
-            pass 
+            raise NotImplemented
         elif target.submission_type == 'urlencode':
-            pass
+            payload = serialise_to_url(payload)
+            self.request(
+                url     = target.uri,
+                method  = method,
+                data    = payload,
+                verify  = False,
+                timeout = 30)
         else:
             raise NotImplemented
 

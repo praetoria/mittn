@@ -23,8 +23,9 @@ least a timeout.
 STATIC_ANOMALIES = [
     # Valid cases
     "A harmless string",  # Something easy to start with
-    str('\xc3\xa5\xc3\xa4\xc3\xb6'),  # Scandinavian characters as Unicode UTF-8
-
+    str(b'\xc3\xa5\xc3\xa4\xc3\xb6', 'utf-8'),  # Scandinavian characters as Unicode UTF-8
+]
+"""
     # SQL and NoSQL injections
     "' --",  # SQL: End statement, start comment
     "' or 'x'='x' --",  # SQL: always true for strings
@@ -176,9 +177,9 @@ STATIC_ANOMALIES = [
     r'%',  # Start of comment
     '--',  # Start of SQL comment
     '?#',  # Start of PCRE comment (e.g., MongoDB regex queries)
-    unichr(0),  # NULL
-    unichr(0) + 'xxxxxxxx',  # NULL followed by more data
-    unichr(0x1a),  # ctrl-z (end of stream)
+    chr(0),  # NULL
+    chr(0) + 'xxxxxxxx',  # NULL followed by more data
+    chr(0x1a),  # ctrl-z (end of stream)
     "\xff\xfe",  # Illegal unicode as string
     "\xff\xff",  # Illegal unicode as string
     '\t',  # tab
@@ -216,3 +217,4 @@ STATIC_ANOMALIES = [
     ":-) =) XD o_O" * 10000,  # Rendering a lot of animated emoticons can cause pain
     "A" * (1024 * 1024)  # 1 MB
 ]
+"""
