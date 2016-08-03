@@ -9,7 +9,7 @@ from datetime import datetime
 class Check(object):
     """
 A class for the check object which holds all relevant information.
-State is initalized as 'Skipped' and changed accordingly when checks are run.
+State is initalized as skipped and changed accordingly when checks are run.
     """
     def __init__(self,title,proto):
         self.title = title
@@ -22,11 +22,12 @@ State is initalized as 'Skipped' and changed accordingly when checks are run.
 
 class Checker(object):
     """ Contains all checks to be run against the output of PythonSslyze.
-        Run method returns an array of Check objects.
+        Run method returns a tuple with three lists of Check objects,
+        succeeded, failed and skipped tests
     """
     def __init__(self,config):
         self.config = config
-        # The check functions return a tuple with
+        # The check functions below return a tuple with
         # a boolean, True if the test was passed,
         # and a description of what failed/succeeded in the test
         self.checks = [
