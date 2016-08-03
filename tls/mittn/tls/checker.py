@@ -11,67 +11,55 @@ class Check(object):
 A class for the check object which holds all relevant information.
 State is initalized as 'Skipped' and changed accordingly when checks are run.
     """
-    def __init__(self,check,title,description):
-        self.check = check
+    def __init__(self,title,proto):
         self.title = title
-        self.description = description
-        self.state = 'SKIP'
+        self.description = ""
+        self.state = "SKIP"
+        self.proto = proto
 
     def __repr__(self):
-        return self.state + ": " + self.title + "\n\t" + self.description
+        return self.state + ": " + self.proto + " " + self.title + "\n\t" + self.description
 
 class Checker(object):
     """ Contains all checks to be run against the output of PythonSslyze.
-        Run method returns a tuple with arrays for passed, failed and skipped tests.
+        Run method returns an array of Check objects.
     """
     def __init__(self,config):
         self.config = config
+        # The check functions return a tuple with
+        # a boolean, True if the test was passed,
+        # and a description of what failed/succeeded in the test
         self.checks = [
-                Check(self.proto_enabled,
-                    "Protocol is enabled",
-                    ""),
-                Check(self.check_cert_begin,
-                    "Certificate begins before now",
-                    ""),
-                Check(self.check_cert_end,
-                    "Certificate expiration",
-                    "Certificate is valid for at least %d days" % self.config.days_valid),
-                Check(self.compression_disabled,
-                    "Compression is disabled",
-                    ""),
-                Check(self.secure_reneg,
-                    "Secure renegotation is enforced",
-                    ""),
-                Check(self.cipher_suites_preferred,
-                    "Preferred cipher suites",
-                    ""),
-                Check(self.cipher_suites_disabled,
-                    "Disabled cipher suites",
-                    ""),
-                Check(self.cipher_suites_enabled,
-                    "Enabled cipher suites",
-                    ""),
-                Check(self.strict_tls_headers,
-                    "Strict TLS headers",
-                    ""),
-                Check(self.heartbleed,
-                    "Heartbleed",
-                    ""),
-                Check(self.sha1,
-                    "Sha1",
-                    ""),
-                Check(self.check_dh_group_size,
-                    "DH-group size",
-                    ""),
-                Check(self.trusted_ca,
-                    "Trusted ca-certificate",
-                    ""),
-                Check(self.matching_hostname,
-                    "Certificate with matching hostname",
-                    ""),
-                Check(self.check_public_key_size,
-                    "Public key size",
-                    ""),
+                (self.proto_enabled,
+                    "Protocol is enabled"),
+                (self.check_cert_begin,
+                    "Certificate begins before now"),
+                (self.check_cert_end,
+                    "Certificate expiration"),
+                (self.compression_disabled,
+                    "Compression is disabled"),
+                (self.secure_reneg,
+                    "Secure renegotiation is enforced"),
+                (self.cipher_suites_preferred,
+                    "Preferred cipher suites"),
+                (self.cipher_suites_disabled,
+                    "Disabled cipher suites"),
+                (self.cipher_suites_enabled,
+                    "Enabled cipher suites"),
+                (self.strict_tls_headers,
+                    "Strict TLS headers"),
+                (self.heartbleed,
+                    "Heartbleed"),
+                (self.sha1,
+                    "SHA1"),
+                (self.check_dh_group_size,
+                    "DH-group size"),
+                (self.trusted_ca,
+                    "Trusted ca-certificate"),
+                (self.matching_hostname,
+                    "Certificate with matching hostname"),
+                (self.check_public_key_size,
+                    "Public key size"),
         ]
 
     def run(self,target):
@@ -85,9 +73,14 @@ class Checker(object):
             self.proto = proto
             if target.protocols[proto]:
                 # if protocol should be enabled
-                for c in self.checks:
+                skip_rest = False
+                for check,title in self.checks:
+                    c = Check(title,proto)
+                    checks.append(c)
+                    if skip_rest:
+                        continue
                     try:
-                        result = c.check()
+                        result = check()
                         # Get the message from failure
                         if type(result) is tuple:
                             result, c.description = result
@@ -98,13 +91,11 @@ class Checker(object):
                     except ConnectionError as e:
                         c.description = e
                         c.state = 'FAIL'
-                        break
+                        skip_rest = True
             else:
             # if protocol should be disabled
-                c = Check(self.proto_disabled,
-                        "Protocol is disabled",
-                        "")
-                result = c.check()
+                c = Check("Protocol is disabled",proto)
+                result = self.proto_disabled()
                 if type(result) is tuple:
                     result, c.description = result
                 if result:
@@ -112,8 +103,10 @@ class Checker(object):
                 else:
                     c.state = 'FAIL'
                 checks.append(c)
-            
-        return self.checks + checks
+            ret = {"PASS":[], "FAIL":[], "SKIP":[]}
+            for c in checks:
+                ret[c.state].append(c)
+        return (ret["PASS"],ret["FAIL"],ret["SKIP"])
 
     # make sure connection is successful
     def proto_enabled(self):
@@ -231,7 +224,7 @@ class Checker(object):
             if re.search(acceptable_suites_regex, accepted_suite.get("name")) is None:
                 found = False
         if not found:
-            return (False,"Not all of the preferred cipher suites were on our list")
+            return (False,"Preferred suites contained suites not on our list")
         return (True,"All of the preferred suites were on our list")
 
 
@@ -273,8 +266,8 @@ class Checker(object):
                 if re.search(acceptable_suites_regex, suite.get("name")) is not None:
                     found = True
         if not found: 
-            return (False,"Enabled suites contained suites not in our list")
-        return (True,"All accepted cipher suites were in our enabled list")
+            return (False,"Enabled suites contained suites not on our list")
+        return (True,"All accepted cipher suites were on our enabled list")
 
     # TLS headers are set to strict
     def strict_tls_headers(self):

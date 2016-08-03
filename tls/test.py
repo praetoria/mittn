@@ -6,7 +6,7 @@ c = Config('mittn.conf')
 #c.suites_preferred = []
 
 t = MittnTlsChecker(config=c)
-checks = t.run('www.google.com')
-for c in checks:
+passed,failed,skipped = t.run('www.google.com')
+for c in passed+failed+skipped:
     print(c)
     print()
