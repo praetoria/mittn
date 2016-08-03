@@ -40,11 +40,11 @@ class Checker(object):
                 (self.compression_disabled,
                     "Compression is disabled"),
                 (self.secure_reneg,
-                    "Secure renegotiation is enforced"),
+                    "Secure renegotiation"),
                 (self.cipher_suites_preferred,
                     "Preferred cipher suites"),
                 (self.cipher_suites_disabled,
-                    "Disabled cipher suites"),
+                    "Blacklisted cipher suites"),
                 (self.cipher_suites_enabled,
                     "Enabled cipher suites"),
                 (self.strict_tls_headers,
@@ -68,45 +68,46 @@ class Checker(object):
             raise ValueError("Missing configuration for Tlschecker")
 
         checks = []
-        for proto in target.protocols.keys():
-            # get results from sslyze for this protocol
+        for proto in target.enabled_protos:
             self.xml = target.xmloutputs[proto]
             self.proto = proto
-            if target.protocols[proto]:
-                # if protocol should be enabled
-                skip_rest = False
-                for check,title in self.checks:
-                    c = Check(title,proto)
-                    checks.append(c)
-                    if skip_rest:
-                        continue
-                    try:
-                        result = check()
-                        # Get the message from failure
-                        if type(result) is tuple:
-                            result, c.description = result
-                        if result:
-                            c.state = 'PASS'
-                        else:
-                            c.state = 'FAIL'
-                    except ConnectionError as e:
-                        c.description = e
-                        c.state = 'FAIL'
-                        skip_rest = True
-            else:
-            # if protocol should be disabled
-                c = Check("Protocol is disabled",proto)
-                result = self.proto_disabled()
-                if type(result) is tuple:
-                    result, c.description = result
-                if result:
-                    c.state = 'PASS'
-                else:
-                    c.state = 'FAIL'
+            # if protocol should be enabled
+            skip_rest = False
+            for check,title in self.checks:
+                c = Check(title,proto)
                 checks.append(c)
-            ret = {"PASS":[], "FAIL":[], "SKIP":[]}
-            for c in checks:
-                ret[c.state].append(c)
+                if skip_rest:
+                    continue
+                try:
+                    result = check()
+                    # Get the message from failure
+                    if type(result) is tuple:
+                        result, c.description = result
+                    if result:
+                        c.state = 'PASS'
+                    else:
+                        c.state = 'FAIL'
+                except ConnectionError as e:
+                    c.description = e
+                    c.state = 'FAIL'
+                    skip_rest = True
+
+        for proto in target.disabled_protos:
+            self.xml = target.xmloutputs[proto]
+            self.proto = proto
+            c = Check("Protocol is disabled",proto)
+            result = self.proto_disabled()
+            if type(result) is tuple:
+                result, c.description = result
+            if result:
+                c.state = 'PASS'
+            else:
+                c.state = 'FAIL'
+            checks.append(c)
+
+        ret = {"PASS":[], "FAIL":[], "SKIP":[]}
+        for c in checks:
+            ret[c.state].append(c)
         return (ret["PASS"],ret["FAIL"],ret["SKIP"])
 
     # make sure connection is successful
@@ -163,7 +164,7 @@ class Checker(object):
 
     # check that certificate is still valid at least for {days}
     def check_cert_end(self):
-        days = self.config.days_valid
+        days = int(self.config.days_valid)
         try:
             root = self.xml.getroot()
         except AttributeError:
@@ -211,7 +212,7 @@ class Checker(object):
     # check preferred suites
     def cipher_suites_preferred(self):
         if not len(self.config.suites_preferred):
-            return True
+            return (True,"No cipher suites to check")
         try:
             root = self.xml.getroot()
         except AttributeError:
@@ -231,7 +232,7 @@ class Checker(object):
 
     def cipher_suites_disabled(self):
         if not len(self.config.suites_disabled):
-            return True
+            return (True,"No cipher suites to check")
         try:
             root = self.xml.getroot()
         except AttributeError:
@@ -252,7 +253,7 @@ class Checker(object):
 
     def cipher_suites_enabled(self):
         if not len(self.config.suites_enabled):
-            return True
+            return (True,"No cipher suites to check")
         try:
             root = self.xml.getroot()
         except AttributeError:
@@ -305,7 +306,7 @@ class Checker(object):
     
     # D-H group size is at least {groupsize}
     def check_dh_group_size(self):
-        groupsize = self.config.dh_group_size
+        groupsize = int(self.config.dh_group_size)
         try:
             root = self.xml.getroot()
         except AttributeError:
@@ -313,14 +314,15 @@ class Checker(object):
         keyexchange = root.find(".//keyExchange")
         if keyexchange is None:
         # Kudos bro!
-            return True
+            return (True,"No Key Exchange found")
         keytype = keyexchange.get('Type')
         realgroupsize = keyexchange.get('GroupSize')
         if keytype == 'DH':
             if groupsize <= int(realgroupsize):
-                return (False,"D-H group size less than %d" % groupsize)
-        return (True,"D-H group size is %d which is at least %d" % \
-                (groupsize, int(realgroupsize)))
+                return (True,"D-H group size is %d which is at least %d" % \
+                    (int(realgroupsize),groupsize))
+            return (False,"D-H group size less than %d" % groupsize)
+        return (True,"No DH-key found")
     
     # check that the certificate is in major root CA trust stores
     def trusted_ca(self):
@@ -352,7 +354,7 @@ class Checker(object):
         
     # ensure that the public key of the cert is at least {keysize} bits
     def check_public_key_size(self):
-        keysize = self.config.public_key_size
+        keysize = int(self.config.public_key_size)
         try:
             root = self.xml.getroot()
         except AttributeError:

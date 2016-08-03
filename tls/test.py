@@ -1,9 +1,9 @@
 from mittn import MittnTlsChecker, Config
 
-c = Config('mittn.conf')
+c = Config('tlschecker','mittn.conf')
 
 # don't check for preferred or enabled cipher suites
-#c.suites_preferred = []
+c.suites_preferred = []
 
 t = MittnTlsChecker(config=c)
 passed,failed,skipped = t.run('www.google.com')

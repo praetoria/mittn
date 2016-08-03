@@ -27,7 +27,7 @@ class PythonSslyze(object):
     def run(self,target):
         target.xmloutputs = {}
         # run sslyze separately for different protocols
-        for proto in target.protocols.keys():
+        for proto in target.enabled_protos + target.disabled_protos:
             target.xmloutputs[proto] = self.run_single(target,proto)
 
     def run_single(self,target,proto):
@@ -62,11 +62,12 @@ class Target(object):
         sslyze's results per tested protocol in an attribute
         named xmloutput[protocol]."""
 
-    def __init__(self,host,port,protocols):
+    def __init__(self,host,port,enabled_protos,disabled_protos):
         self.host = host
         self.port = port
         # protocols that should be enabled or disabled
-        self.protocols = protocols
+        self.enabled_protos = enabled_protos
+        self.disabled_protos = disabled_protos
 
 class MittnTlsChecker(object):
     """ This is the actual tlschecker object.
@@ -90,7 +91,8 @@ class MittnTlsChecker(object):
         self.checker.config = self.config
 
     def run(self,host,port=443):
-        target = Target(host,port,self.config.protocols)
+        target = Target(host,port,
+                self.config.protocols_enabled,self.config.protocols_disabled)
 
         # puts results into target.xmloutputs[proto] dict
         self.sslyze.run(target)
