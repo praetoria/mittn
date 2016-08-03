@@ -1,3 +1,3 @@
 from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)
-from .tls.tlschecker import MittnTlsChecker, Config, Checker
+from .tls.mittntlschecker import MittnTlsChecker, Config, TlsChecker
