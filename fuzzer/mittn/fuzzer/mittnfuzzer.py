@@ -20,12 +20,13 @@ class MittnFuzzer(object):
 
     def __init__(self, archiver=None, radamsa=None, generator=None,
             checker=None, client=None,config=None):
-        self.config = config or Config("mittn.conf","fuzzer")
+        self.config = config or Config("fuzzer","mittn.conf")
         self.archiver = archiver or Archiver(self.config.db_url)
         radamsa = radamsa or PythonRadamsa(self.config.radamsa_path)
         self.generator = generator or AnomalyGenerator(radamsa)
         self.checker = checker or Checker()
         self.client = client or Client()
+        self.client.timeout = int(self.config.timeout)
 
         self.targets = []
 

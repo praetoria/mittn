@@ -52,7 +52,7 @@ class Client(Session):
             raise NotImplemented
         resp = self.send(
             request = req.prepare(),
-            timeout = 30)
+            timeout = self.timeout)
         return resp
 """
         try:
