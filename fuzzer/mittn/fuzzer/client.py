@@ -39,7 +39,7 @@ class Client(Session):
                 url     = target.uri + payload,
                 method  = method,
                 verify  = False,
-                timeout = 30)
+                timeout = self.timeout)
         elif target.submission_type == 'json':
             raise NotImplemented
         elif target.submission_type == 'urlencode':
@@ -49,7 +49,7 @@ class Client(Session):
                 method  = method,
                 data    = payload,
                 verify  = False,
-                timeout = 30)
+                timeout = self.timeout)
         else:
             raise NotImplemented
 
