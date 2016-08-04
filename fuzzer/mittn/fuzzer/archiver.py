@@ -74,8 +74,8 @@ class Archiver(object):
         # If no db in use, simply fail now
         if self.session is None:
             # XXX: Long assert messages seem to fail, so we truncate uri and submission to 200 bytes.
-            truncated_submission = issue.resp_body[:200] + "... (truncated)" if len(issue.resp_body) > 210 else issue.resp_body
-            truncated_url = issue.resp_body[:200] + "... (truncated)" if len(issue.url) > 210 else issue.url
+            truncated_submission = issue.resp_body[:200] + b"... (truncated)" if len(issue.resp_body) > 210 else issue.resp_body
+            truncated_url = issue.resp_body[:200] + b"... (truncated)" if len(issue.url) > 210 else issue.url
             assert False, (
                 "Response from server failed a check, and no errors "
                 "database is in use."

@@ -21,7 +21,10 @@ class MittnFuzzer(object):
     def __init__(self, archiver=None, radamsa=None, generator=None,
             checker=None, client=None,config=None):
         self.config = config or Config("fuzzer","mittn.conf")
-        self.archiver = archiver or Archiver(self.config.db_url)
+        db_url = None
+        if hasattr(self.config,'db_url'):
+            db_url = self.config.db_url
+        self.archiver = archiver or Archiver(db_url)
         radamsa = radamsa or PythonRadamsa(self.config.radamsa_path)
         self.generator = generator or AnomalyGenerator(radamsa)
         self.checker = checker or Checker()
