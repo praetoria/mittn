@@ -40,7 +40,7 @@ class MittnFuzzer(object):
         pass
 
     def fuzz(self):
-        methods = ['GET','POST'] #this would really come from the configuration file!
+        methods = self.config.methods
         #fuzz and inject all the added targets
         for target in self.targets:
             for payload in self.generator.generate_anomalies(target.valid_submission, [target.valid_submission], 1):
