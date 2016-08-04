@@ -24,11 +24,12 @@ class PythonSslyze(object):
         except (subprocess.CalledProcessError, OSError) as e:
             raise ValueError("Couldn't execute sslyze from %s: %s" % (path, e))
 
-    def run(self,target):
-        target.xmloutputs = {}
+    def run(self,target,protocols):
+        xmloutputs = {}
         # run sslyze separately for different protocols
-        for proto in target.enabled_protos + target.disabled_protos:
-            target.xmloutputs[proto] = self.run_single(target,proto)
+        for proto in protocols:
+            xmloutputs[proto] = self.run_single(target,proto)
+        return xmloutputs
 
     def run_single(self,target,proto):
         # run sslyze against a host and return xml output
@@ -44,7 +45,6 @@ class PythonSslyze(object):
                 "--http_get", "--sni=%s" % target.host,
                 "%s:%s" % (target.host, target.port)])
             xml = ET.parse(xmloutfile.name)
-            #print(ET.dump(xml))
         except subprocess.CalledProcessError as e:
             raise ValueError("Couldn't execute sslyze: %s" % e)
         except ET.ParseError as e:
@@ -62,12 +62,9 @@ class Target(object):
         sslyze's results per tested protocol in an attribute
         named xmloutput[protocol]."""
 
-    def __init__(self,host,port,enabled_protos,disabled_protos):
+    def __init__(self,host,port):
         self.host = host
         self.port = port
-        # protocols that should be enabled or disabled
-        self.enabled_protos = enabled_protos
-        self.disabled_protos = disabled_protos
 
 class MittnTlsChecker(object):
     """ This is the actual tlschecker object.
@@ -91,11 +88,11 @@ class MittnTlsChecker(object):
         self.checker.config = self.config
 
     def run(self,host,port=443):
-        target = Target(host,port,
-                self.config.protocols_enabled,self.config.protocols_disabled)
+        target = Target(host,port)
+        protos_e = self.config.protocols_enabled
+        protos_d = self.config.protocols_disabled
 
-        # puts results into target.xmloutputs[proto] dict
-        self.sslyze.run(target)
+        xmloutputs = self.sslyze.run(target,protos_e + protos_d)
 
         # perform checks on the output from sslyze
-        return self.checker.run(target)
+        return self.checker.run(xmloutputs)

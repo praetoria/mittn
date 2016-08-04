@@ -63,13 +63,13 @@ class TlsChecker(object):
                     "Public key size"),
         ]
 
-    def run(self,target):
+    def run(self,xmloutputs):
         if not self.config:
             raise ValueError("Missing configuration for Tlschecker")
 
         checks = []
-        for proto in target.enabled_protos:
-            self.xml = target.xmloutputs[proto]
+        for proto in self.config.protocols_enabled:
+            self.xml = xmloutputs[proto]
             self.proto = proto
             # if protocol should be enabled
             skip_rest = False
@@ -88,12 +88,12 @@ class TlsChecker(object):
                     else:
                         c.state = 'FAIL'
                 except ConnectionError as e:
-                    c.description = e
+                    c.description = str(e)
                     c.state = 'FAIL'
                     skip_rest = True
 
-        for proto in target.disabled_protos:
-            self.xml = target.xmloutputs[proto]
+        for proto in self.config.protocols_disabled:
+            self.xml = xmloutputs[proto]
             self.proto = proto
             c = Check("Protocol is disabled",proto)
             result = self.proto_disabled()
