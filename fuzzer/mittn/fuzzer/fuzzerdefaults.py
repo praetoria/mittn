@@ -8,4 +8,5 @@ class FuzzerDefaultConfig(object):
 [fuzzer]
 methods=GET,POST
 radamsa_path=/usr/bin/radamsa
+timeout=30
         """
