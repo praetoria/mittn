@@ -1,5 +1,11 @@
 from sqlalchemy import Column, types
 from sqlalchemy.ext.declarative.api import declarative_base
+import datetime
+
+from requests.exceptions import RequestException
+from requests.models import Response
+
+import json
 
 Base = declarative_base()
 
@@ -48,27 +54,27 @@ class Issue(BaseModel):
     resp_history = Column(types.LargeBinary, default=b'')
 
     @staticmethod
-    def from_resp_or_exc(scenario, resp_or_exc):
+    def from_resp_or_exc(scenario_id, resp_or_exc):
 
         issue = Issue(
             new_issue=True,
             timestamp=datetime.datetime.utcnow(),  # misleading...
-            test_runner_host=HOSTNAME,
-            scenario_id=scenario,
+            test_runner_host='FIXME',
+            scenario_id=scenario_id,
         )
 
         if isinstance(resp_or_exc, RequestException):
             e = resp_or_exc
             if e.request:
-                issue.req_headers = json.dumps(dict(e.request.headers))
-                issue.req_body = str(e.request.body)
+                issue.req_headers = bytes(json.dumps(dict(e.request.headers)), 'utf-8')
+                issue.req_body = e.request.body
                 issue.url = e.request.url
                 issue.req_method = e.request.method
             if e.response:
                 issue.resp_statuscode = e.response.status_code
-                issue.resp_headers = json.dumps(dict(e.response.headers))
-                issue.resp_body = str(e.response.text)
-                issue.resp_history = str(e.response.history)
+                issue.resp_headers = bytes(json.dumps(dict(e.response.headers)), 'utf-8')
+                issue.resp_body = e.response.text
+                issue.resp_history = bytes(e.response.history, 'utf-8')
 
             if isinstance(e, Timeout):
                 issue.server_timeout = True
@@ -77,14 +83,15 @@ class Issue(BaseModel):
 
         elif isinstance(resp_or_exc, Response):
             resp = resp_or_exc
-            issue.req_headers = json.dumps(dict(resp.request.headers))
-            issue.req_body = str(resp.request.body)
+            issue.req_headers = bytes(json.dumps(dict(resp.request.headers)), 'utf-8')
+            issue.req_body = bytes(resp.request.body, 'utf-8')
             issue.url = resp.request.url
             issue.req_method = resp.request.method
             issue.resp_statuscode = resp.status_code
-            issue.resp_headers = json.dumps(dict(resp.headers))
-            issue.resp_body = str(resp.text)
-            issue.resp_history = str(resp.history)
+            issue.resp_headers = bytes(json.dumps(dict(resp.headers)), 'utf-8')
+            issue.resp_body = bytes(resp.text, 'utf-8')
+            #issue.resp_history = bytes(resp.history, 'utf-8')
+            issue.resp_history = b'history'
 
             if hasattr(resp, 'server_error_text_matched'):  # Hacky!
                 issue.server_error_text_detected = True

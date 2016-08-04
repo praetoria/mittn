@@ -1,17 +1,15 @@
 import socket
 import codecs
 
+from requests import Request
 from requests.exceptions import Timeout, RequestException
 from requests.models import Response
 from requests.sessions import Session
 
 from mittn.fuzzer.utils import *
 
-
 FQDN = socket.getfqdn()
 HOSTNAME = socket.gethostbyname(socket.gethostname())
-
-
 
 class Client(Session):
 
@@ -33,29 +31,34 @@ class Client(Session):
         })
 
     def do_target(self, target, method, payload):
+        req = Request(
+            method  = method,
+            headers = self.headers)
+
         if target.submission_type == 'urlparams':
             payload = dict_to_urlparams(payload)
-            self.request(
-                url     = target.uri + payload,
-                method  = method,
-                verify  = False,
-                timeout = 30)
+            req.url = target.uri + payload
+
         elif target.submission_type == 'json':
-            raise NotImplemented
+            payload  = serialise_to_json(payload, True)
+            req.url  = target.uri
+            req.data = payload
+
         elif target.submission_type == 'urlencode':
             payload = serialise_to_url(payload)
-            self.request(
-                url     = target.uri,
-                method  = method,
-                data    = payload,
-                verify  = False,
-                timeout = 30)
+            req.url  = target.uri
+            req.data = payload
         else:
             raise NotImplemented
-
-    def request_safe(self, *args, **kwargs):
+        resp = self.send(
+            request = req.prepare(),
+            timeout = 30)
+        return resp
+"""
         try:
-            resp = self.request(*args, **kwargs)
+            resp = self.send(
+                request = req.prepare(),
+                timeout = 30)
         except RequestException as e:
             return e
-        return resp
+"""

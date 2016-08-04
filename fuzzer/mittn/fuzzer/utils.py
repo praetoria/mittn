@@ -1,3 +1,5 @@
+import json
+import codecs
 from urllib import parse
 from collections import OrderedDict
 
@@ -57,3 +59,22 @@ def serialise_to_url(dictionary, encode=True):
                 serialised.append("%s=%s" % (str(key), str(dictionary[key])))
     return str("&".join(serialised))
 
+def serialise_to_json(dictionary, encode=True):
+    """Take a dictionary and JSON-encode it for HTTP submission
+    :param dictionary: A dictionary to be serialised
+    :param encode: Should the putput be ensured to be ASCII
+    """
+    # Just return the JSON representation, and output as raw if requested
+    # The latin1 encoding is a hack that just allows a 8-bit-clean byte-wise
+    # output path. Using UTF-8 here would make Unicode libraries barf when using
+    # fuzzed data. The character set is communicated to the client in the
+    # HTTP headers anyway, so this shouldn't have an effect on efficacy.
+    return json.dumps(dictionary, ensure_ascii=encode, default=bytedecoder)
+
+def bytedecoder(obj):
+    if isinstance(obj, bytes):
+        #does the choice of encoding really matter here? 
+        return codecs.decode(obj, 'iso-8859-1')
+        #return codecs.decode(obj, 'utf-8')
+    else:
+        raise TypeError

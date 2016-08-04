@@ -1,3 +1,6 @@
+from requests import RequestException
+from requests.models import Response
+
 class Checker(object):
 
     BODY_ERROR_LIST = [

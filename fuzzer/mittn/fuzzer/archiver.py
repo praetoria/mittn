@@ -2,6 +2,8 @@ from sqlalchemy import create_engine#, Column, types
 from sqlalchemy.orm.session import sessionmaker
 
 from mittn.fuzzer.issue import Issue
+from requests.exceptions import RequestException
+from requests.models import Response
 
 class Archiver(object):
 

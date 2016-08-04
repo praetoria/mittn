@@ -14,6 +14,7 @@ from mittn.fuzzer.checker import Checker
 from mittn.fuzzer.client import Client
 from mittn.fuzzer.target import Target
 from mittn.fuzzer.config import Config
+from mittn.fuzzer.issue import Issue
 
 class MittnFuzzer(object):
 
@@ -43,6 +44,12 @@ class MittnFuzzer(object):
         methods = self.config.methods
         #fuzz and inject all the added targets
         for target in self.targets:
+            responses = []
             for payload in self.generator.generate_anomalies(target.valid_submission, [target.valid_submission], 1):
                 for method in methods:
-                    self.client.do_target(target, method, payload)
+                    responses.append( self.client.do_target(target, method, payload))
+            for response in responses:
+                if self.checker.check(response, None, [500]):
+                    newissue = Issue.from_resp_or_exc(target.scenario_id, response)
+                    if not self.archiver.known_false_positive(newissue):
+                        self.archiver.add_issue(newissue)

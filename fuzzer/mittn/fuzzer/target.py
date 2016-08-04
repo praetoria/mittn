@@ -1,5 +1,6 @@
 from mittn.fuzzer.utils import urlparams_to_dict
 from urllib import parse
+import json
 
 class Target():
     
@@ -13,7 +14,7 @@ class Target():
             self.valid_submission = urlparams_to_dict(valid_submission)
 
         elif self.submission_type == 'json':
-            raise NotImplemented
+            self.valid_submission = json.loads(valid_submission)
 
         elif self.submission_type == 'urlencode':
             self.valid_submission = parse.parse_qs(valid_submission)
