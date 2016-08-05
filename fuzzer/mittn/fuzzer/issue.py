@@ -67,13 +67,13 @@ class Issue(BaseModel):
             e = resp_or_exc
             if e.request:
                 issue.req_headers = bytes(json.dumps(dict(e.request.headers)), 'utf-8')
-                issue.req_body = e.request.body
+                issue.req_body = bytes(e.request.body, 'utf-8')
                 issue.url = e.request.url
                 issue.req_method = e.request.method
             if e.response:
                 issue.resp_statuscode = e.response.status_code
                 issue.resp_headers = bytes(json.dumps(dict(e.response.headers)), 'utf-8')
-                issue.resp_body = e.response.text
+                issue.resp_body = bytes(e.response.text, 'utf-8')
                 issue.resp_history = bytes(e.response.history, 'utf-8')
 
             if isinstance(e, Timeout):
@@ -84,7 +84,7 @@ class Issue(BaseModel):
         elif isinstance(resp_or_exc, Response):
             resp = resp_or_exc
             issue.req_headers = bytes(json.dumps(dict(resp.request.headers)), 'utf-8')
-            issue.req_body = resp.request.body
+            issue.req_body = bytes(resp.request.body, 'utf-8')
             issue.url = resp.request.url
             issue.req_method = resp.request.method
             issue.resp_statuscode = resp.status_code
