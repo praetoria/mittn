@@ -5,6 +5,7 @@ import pytz
 import dateutil.parser
 import dateutil.relativedelta
 from datetime import datetime
+import xml.etree.ElementTree as ET
 
 class Check(object):
     """
@@ -91,6 +92,9 @@ class TlsChecker(object):
                     c.description = str(e)
                     c.state = 'FAIL'
                     skip_rest = True
+                except ValueError as e:
+                    print(ET.dump(self.xml))
+                    print(str(e))
 
         for proto in self.config.protocols_disabled:
             self.xml = xmloutputs[proto]
@@ -288,8 +292,10 @@ class TlsChecker(object):
             root = self.xml.getroot()
         except AttributeError:
             raise ValueError("No stored TLS connection result set was found.")
-        heartbleed = root.find('.//openSslHeartbleed')
-        if heartbleed.get('isVulnerable') != 'False':
+        heartbleedstatus = root.find('.//openSslHeartbleed')
+        if heartbleedstatus is None:
+            raise ValueError("No openSslHeartbleed section found in the xml")
+        if heartbleedstatus.get('isVulnerable') != 'False':
             return (False,"Server is vulnerable for Heartbleed")
         return (True,"Server is not vulnerable to Heartbleed")
     
