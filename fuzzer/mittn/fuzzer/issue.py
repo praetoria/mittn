@@ -26,7 +26,7 @@ class BaseModel(Base):
         super(BaseModel, self).__init__(**kwargs)
 
 class Issue(BaseModel):
-    __tablename__ = 'httpfuzzer_issues',
+    __tablename__ = 'httpfuzzer_issues'
 
     # We use LargeBinary to store those fields that could contain somehow
     # bad Unicode, just in case some component downstream tries to parse
