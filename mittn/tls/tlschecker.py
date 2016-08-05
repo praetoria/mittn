@@ -231,14 +231,14 @@ class TlsChecker(object):
 
 
     def cipher_suites_disabled(self):
-        if not len(self.config.suites_disabled):
+        if not len(self.config.suites_blacklisted):
             return (True,"No cipher suites to check")
         try:
             root = self.xml.getroot()
         except AttributeError:
             raise ValueError("No stored TLS connection result set was found.")
 
-        suite_blacklist_regex = "(" + ")|(".join(self.config.suites_disabled) + ")"
+        suite_blacklist_regex = "(" + ")|(".join(self.config.suites_blacklisted) + ")"
         # The regex should not match to any accepted suite for any protocol
         passed = True
         found_list = ""

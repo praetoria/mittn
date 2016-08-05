@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 import os
 import xml.etree.ElementTree as ET
 
-from .config import Config
+from ..config import Config
 from .tlschecker import TlsChecker
 
 class PythonSslyze(object):

@@ -84,7 +84,10 @@ class Issue(BaseModel):
         elif isinstance(resp_or_exc, Response):
             resp = resp_or_exc
             issue.req_headers = bytes(json.dumps(dict(resp.request.headers)), 'utf-8')
-            issue.req_body = bytes(resp.request.body, 'utf-8')
+            if not isinstance(resp.request.body,str):
+                issue.req_body = resp.request.body
+            else:
+                issue.req_body = bytes(resp.request.body, 'utf-8')
             issue.url = resp.request.url
             issue.req_method = resp.request.method
             issue.resp_statuscode = resp.status_code
