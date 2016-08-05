@@ -1,8 +1,13 @@
 class TlsDefaultConfig(object):
+    """
+    Remember to add the name of a new list attribute
+    you want to add in the list_attributes list,
+    to make sure it gets parsed correctly
+    """
     def __init__(self):
         # attributes in the config which are lists
         self.list_attributes = [
-                "suites_disabled",
+                "suites_blacklisted",
                 "suites_enabled",
                 "suites_preferred",
                 "protocols_disabled",
