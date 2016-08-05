@@ -93,6 +93,7 @@ class TlsChecker(object):
                     c.state = 'FAIL'
                     skip_rest = True
                 except ValueError as e:
+                # probably failed to read the xml
                     print(ET.dump(self.xml))
                     print(str(e))
 
@@ -299,7 +300,7 @@ class TlsChecker(object):
             return (False,"Server is vulnerable for Heartbleed")
         return (True,"Server is not vulnerable to Heartbleed")
     
-    # check that the certrificate doesn't use SHA1
+    # check that the certificate doesn't use SHA1
     def sha1(self):
         try:
             root = self.xml.getroot()
