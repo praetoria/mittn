@@ -1,3 +1,3 @@
 from mittn  import Config
-from mittn.fuzzer.fuzzerdefaults import FuzzerDefaultConfig
-Config.tools["fuzzer"] = FuzzerDefaultConfig()
+from mittn.fuzzer.fuzzerdefaults import FuzzerDefaults
+Config.tools["fuzzer"] = FuzzerDefaults()
