@@ -6,8 +6,8 @@ import uuid
 import copy
 
 from sqlalchemy.orm.session import Session
-from mittn.fuzzer.archiver import Archiver
-from mittn.fuzzer.issue import Issue
+from mittn.archiver import Archiver
+from mittn.fuzzer.fuzzerissue import FuzzerIssue as Issue
 
 class test_archiver(unittest.TestCase):
 

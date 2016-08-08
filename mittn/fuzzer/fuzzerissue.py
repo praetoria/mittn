@@ -4,40 +4,18 @@ import datetime
 
 from requests.exceptions import RequestException
 from requests.models import Response
+from mittn.issue import Issue
 
 import json
 
-Base = declarative_base()
-
-class BaseModel(Base):
-    __abstract__ = True
-
-    def __init__(self, **kwargs):
-        # Fill in defaults (SQLAlchemy by default only has these after commit())
-        for attr in self.__mapper__.column_attrs:
-            if attr.key in kwargs:
-                continue
-
-            col = attr.columns[0]
-
-            if col.default and not callable(col.default.arg):
-                kwargs[attr.key] = col.default.arg
-
-        super(BaseModel, self).__init__(**kwargs)
-
-class Issue(BaseModel):
+class FuzzerIssue(Issue):
     __tablename__ = 'httpfuzzer_issues'
 
     # We use LargeBinary to store those fields that could contain somehow
     # bad Unicode, just in case some component downstream tries to parse
     # a string provided as Unicode.
-
-    issue_no = Column(types.Integer, primary_key=True, nullable=False)
-    new_issue = Column(types.Boolean, default=False, nullable=False)
-    timestamp = Column(types.DateTime(timezone=True), nullable=False)
-    test_runner_host = Column(types.String, nullable=False)
-    scenario_id = Column(types.String, nullable=False)
-    url = Column(types.String, nullable=False)
+     
+    # fields that are common used in all tools come from issue.py
 
     server_protocol_error = Column(types.String, default='')
     server_timeout = Column(types.Boolean, default=False, nullable=False)
@@ -65,14 +43,14 @@ class Issue(BaseModel):
         # This really forces the DB structure and semantics, we don't want that!
 
         hits = (
-            session.query(Issue)
-            .filter(Issue.scenario_id == self.scenario_id)
-            .filter(Issue.req_method == self.req_method)
-            .filter(Issue.resp_statuscode == self.resp_statuscode)
-            .filter(Issue.server_protocol_error == self.server_protocol_error)
-            .filter(Issue.server_error_text_detected == self.server_error_text_detected)
-            .filter(Issue.server_error_text_matched == self.server_error_text_matched)
-            .filter(Issue.server_timeout == self.server_timeout)
+            session.query(FuzzerIssue)
+            .filter(FuzzerIssue.scenario_id == self.scenario_id)
+            .filter(FuzzerIssue.req_method == self.req_method)
+            .filter(FuzzerIssue.resp_statuscode == self.resp_statuscode)
+            .filter(FuzzerIssue.server_protocol_error == self.server_protocol_error)
+            .filter(FuzzerIssue.server_error_text_detected == self.server_error_text_detected)
+            .filter(FuzzerIssue.server_error_text_matched == self.server_error_text_matched)
+            .filter(FuzzerIssue.server_timeout == self.server_timeout)
             .all()
         )
         return len(hits) > 0
@@ -80,7 +58,7 @@ class Issue(BaseModel):
     @staticmethod
     def from_resp_or_exc(scenario_id, resp_or_exc):
 
-        issue = Issue(
+        issue = FuzzerIssue(
             new_issue=True,
             timestamp=datetime.datetime.utcnow(),  # misleading...
             test_runner_host='FIXME',

@@ -14,7 +14,7 @@ from mittn.fuzzer.checker import Checker
 from mittn.fuzzer.client import Client
 from mittn.fuzzer.target import Target
 from mittn.config import Config
-from mittn.fuzzer.issue import Issue
+from mittn.fuzzer.fuzzerissue import FuzzerIssue
 
 class MittnFuzzer(object):
 
@@ -42,7 +42,7 @@ class MittnFuzzer(object):
 
     def init(self):
         #create and test database connection
-        self.archiver.init(Issue) # Hacky
+        self.archiver.init(FuzzerIssue) # Hacky
         #configure how issues are created
         pass
 
@@ -63,6 +63,6 @@ class MittnFuzzer(object):
                     responses.append( self.client.do_target(target, method, payload))
             for response in responses:
                 if self.checker.check(response, None):
-                    newissue = Issue.from_resp_or_exc(target.scenario_id, response)
+                    newissue = FuzzerIssue.from_resp_or_exc(target.scenario_id, response)
                     if not self.archiver.known_false_positive(newissue):
                         self.archiver.add_issue(newissue)

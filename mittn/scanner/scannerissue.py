@@ -4,28 +4,11 @@ import datetime
 
 from requests.exceptions import RequestException
 from requests.models import Response
+from mittn.issue import Issue
 
 import json
 
-Base = declarative_base()
-
-class BaseModel(Base):
-    __abstract__ = True
-
-    def __init__(self, **kwargs):
-        # Fill in defaults (SQLAlchemy by default only has these after commit())
-        for attr in self.__mapper__.column_attrs:
-            if attr.key in kwargs:
-                continue
-
-            col = attr.columns[0]
-
-            if col.default and not callable(col.default.arg):
-                kwargs[attr.key] = col.default.arg
-
-        super(BaseModel, self).__init__(**kwargs)
-
-class ScannerIssue(BaseModel):
+class ScannerIssue(Issue):
     __tablename__ = 'headlessscanner_issues'
 
     # We use LargeBinary to store those fields that could contain somehow
