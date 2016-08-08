@@ -26,13 +26,13 @@ class Checker(object):
         # 'failure',  # too generic!
     ]
 
-    def check(self, resp_or_exc, body_errors=None, allowed_status_codes=None, disallowed_status_codes=None):
+    def check(self, resp_or_exc, body_errors=None):
         if isinstance(resp_or_exc, RequestException):
             return True
         elif isinstance(resp_or_exc, Response):
             if (
-                allowed_status_codes and resp_or_exc.status_code not in allowed_status_codes or
-                disallowed_status_codes and resp_or_exc.status_code in disallowed_status_codes
+                self.allowed_status_codes and resp_or_exc.status_code not in self.allowed_status_codes or
+                self.disallowed_status_codes and resp_or_exc.status_code in self.disallowed_status_codes
             ):
                 return True
             elif body_errors:

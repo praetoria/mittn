@@ -28,6 +28,13 @@ class MittnFuzzer(object):
         radamsa = radamsa or PythonRadamsa(self.config.radamsa_path)
         self.generator = generator or AnomalyGenerator(radamsa)
         self.checker = checker or Checker()
+        if self.config.allowed_statuses:
+            self.config.allowed_statuses = [int(i) for i in self.config.allowed_statuses]
+        if self.config.disallowed_statuses:
+            self.config.disallowed_statuses = [int(i) for i in self.config.disallowed_statuses]
+        self.checker.allowed_status_codes = self.config.allowed_statuses
+        self.checker.disallowed_status_codes = self.config.disallowed_statuses
+
         self.client = client or Client()
         self.client.timeout = int(self.config.timeout)
 
@@ -49,11 +56,13 @@ class MittnFuzzer(object):
         #fuzz and inject all the added targets
         for target in self.targets:
             responses = []
-            for payload in self.generator.generate_anomalies(target.valid_submission, [target.valid_submission], 1):
+            for payload in self.generator.generate_anomalies(target.valid_submission,
+                    [target.valid_submission],
+                    int(self.config.anomalies)):
                 for method in methods:
                     responses.append( self.client.do_target(target, method, payload))
             for response in responses:
-                if self.checker.check(response, None, [500]):
+                if self.checker.check(response, None):
                     newissue = Issue.from_resp_or_exc(target.scenario_id, response)
                     if not self.archiver.known_false_positive(newissue):
                         self.archiver.add_issue(newissue)
