@@ -24,6 +24,10 @@ class Config(object):
                     s = config[section][key]
                     # parse comma separated lists
                     if key in list_attributes:
-                        s = s.strip(",").split(",")
-                        s = [i.strip() for i in s]
+                        s = s.strip("\t\n ,")
+                        if len(s) > 0:
+                            s = s.split(",")
+                            s = [i.strip() for i in s]
+                        else:
+                            s = []
                     setattr(self,key,s)
