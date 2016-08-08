@@ -15,12 +15,8 @@ class ScannerIssue(Issue):
     # bad Unicode, just in case some component downstream tries to parse
     # a string provided as Unicode.
 
-    issue_no = Column(types.Integer, primary_key=True, nullable=False)
-    new_issue = Column(types.Boolean, default=False, nullable=False)
-    timestamp = Column(types.DateTime(timezone=True), nullable=False)
-    test_runner_host = Column(types.String, nullable=False)
-    scenario_id = Column(types.String, nullable=False)
-    url = Column(types.String, nullable=False)
+    # XXX fields that are used in all tools come from issue.py
+
     severity = Column(types.Text, nullable=False)
     issuetype = Column(types.Text, nullable=False)
     issuename = Column(types.Text, nullable=False)

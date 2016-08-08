@@ -15,7 +15,7 @@ class FuzzerIssue(Issue):
     # bad Unicode, just in case some component downstream tries to parse
     # a string provided as Unicode.
      
-    # fields that are common used in all tools come from issue.py
+    # XXX fields that are used in all tools come from issue.py
 
     server_protocol_error = Column(types.String, default='')
     server_timeout = Column(types.Boolean, default=False, nullable=False)
