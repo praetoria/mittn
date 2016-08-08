@@ -11,21 +11,19 @@ import json
 class ScannerIssue(Issue):
     __tablename__ = 'headlessscanner_issues'
 
-    # We use LargeBinary to store those fields that could contain somehow
-    # bad Unicode, just in case some component downstream tries to parse
-    # a string provided as Unicode.
+    # We use LargeBinary in message because it can be very big
 
     # XXX fields that are used in all tools come from issue.py
 
-    severity = Column(types.Text, nullable=False)
-    issuetype = Column(types.Text, nullable=False)
-    issuename = Column(types.Text, nullable=False)
-    issuedetail = Column(types.Text, nullable=False)
-    confidence = Column(types.Text, nullable=False)
-    host = Column(types.Text, nullable=False)
-    port = Column(types.Text, nullable=False)
-    protocol = Column(types.Text, nullable=False)
-    messages = Column(types.LargeBinary, nullable=False)
+    severity = Column(types.Text)
+    issuetype = Column(types.Text)
+    issuename = Column(types.Text)
+    issuedetail = Column(types.Text)
+    confidence = Column(types.Text)
+    host = Column(types.Text)
+    port = Column(types.Text)
+    protocol = Column(types.Text)
+    messages = Column(types.LargeBinary)
 
     def known_false_positive(self,session):
 
@@ -40,4 +38,15 @@ class ScannerIssue(Issue):
             .all()
         )
         return len(hits) > 0
-    # TODO: function to create new issues
+    @staticmethod
+    def issue_from_dict(scenario_id,obj):
+    # TODO: make sure this works
+        issue = Issue(
+                new_issue=True,
+                timestamp=datetime.datetime.utcnow(),
+                test_runner_host="FIXME"
+                scenario_id=scenario_id,
+                )
+        for key in obj.keys:
+            setattr(issue,key,obj[key])
+        return issue
