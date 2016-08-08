@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine#, Column, types
 from sqlalchemy.orm.session import sessionmaker
 
-from mittn.fuzzer.issue import Issue
 from requests.exceptions import RequestException
 from requests.models import Response
 
@@ -11,13 +10,13 @@ class Archiver(object):
         self.db_url = db_url
         self.session = None
 
-    def init(self):
+    def init(self,issuecls=None):
         """Opens the database specified in the feature file and creates tables if not already created.
 
         :return: A database handle, or None if no database in use
 
         """
-        if not self.db_url:
+        if not self.db_url or not issuecls:
             return None  # No false positives database is in use
 
         # Connect to the database
@@ -26,7 +25,7 @@ class Archiver(object):
         self.session = Session()
 
         # Create DB tables (has no effect, if they already exist)
-        Issue.metadata.create_all(db_engine)
+        issuecls.metadata.create_all(db_engine)
 
     def known_false_positive(self, issue):
         """Check whether issue already exists in the database (usually a "false positive" if it does exist).
@@ -80,6 +79,6 @@ class Archiver(object):
         if self.session is None:
             return 0
 
-        hits = self.session.query(Issue).filter_by(new_issue=True).all()
+        hits = self.session.query(type(self)).filter_by(new_issue=True).all()
 
         return len(hits)

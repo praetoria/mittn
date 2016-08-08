@@ -42,7 +42,7 @@ class MittnFuzzer(object):
 
     def init(self):
         #create and test database connection
-        self.archiver.init()
+        self.archiver.init(Issue) # Hacky
         #configure how issues are created
         pass
 
