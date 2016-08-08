@@ -216,7 +216,7 @@ class TlsChecker(object):
 
     # check preferred suites
     def cipher_suites_preferred(self):
-        if not len(self.config.suites_preferred):
+        if not self.config.suites_preferred:
             return (True,"No cipher suites to check")
         try:
             root = self.xml.getroot()
@@ -236,7 +236,7 @@ class TlsChecker(object):
 
 
     def cipher_suites_disabled(self):
-        if not len(self.config.suites_blacklisted):
+        if not self.config.suites_blacklisted:
             return (True,"No cipher suites to check")
         try:
             root = self.xml.getroot()
@@ -257,7 +257,7 @@ class TlsChecker(object):
         return (True,"No blacklisted suites amongst accepted cipher suites")
 
     def cipher_suites_enabled(self):
-        if not len(self.config.suites_enabled):
+        if not self.config.suites_enabled:
             return (True,"No cipher suites to check")
         try:
             root = self.xml.getroot()

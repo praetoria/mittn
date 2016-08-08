@@ -4,7 +4,7 @@ import io
 
 class Config(object):
     tools = {}
-    def __init__(self,tool,path=None):
+    def __init__(self,tool,path='mittn.conf'):
         ## file based configuration ##
         config = ConfigParser()
         default_config = io.StringIO(Config.tools[tool].defaults)
@@ -29,5 +29,5 @@ class Config(object):
                             s = s.split(",")
                             s = [i.strip() for i in s]
                         else:
-                            s = []
+                            s = None
                     setattr(self,key,s)
