@@ -7,13 +7,13 @@ import re
 
 import six
 
-from mittn.fuzzer.archiver import Archiver
+from mittn.archiver import Archiver
 from mittn.fuzzer.pythonradamsa import PythonRadamsa
 from mittn.fuzzer.anomalygenerator import AnomalyGenerator
 from mittn.fuzzer.checker import Checker
 from mittn.fuzzer.client import Client
 from mittn.fuzzer.target import Target
-from mittn.fuzzer.config import Config
+from mittn.config import Config
 from mittn.fuzzer.issue import Issue
 
 class MittnFuzzer(object):

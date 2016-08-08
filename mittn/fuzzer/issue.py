@@ -53,6 +53,30 @@ class Issue(BaseModel):
     resp_body = Column(types.LargeBinary, default=b'')
     resp_history = Column(types.LargeBinary, default=b'')
 
+    def known_false_positive(self,session):
+        # XXX: Because each fuzz case is likely to be separate, we cannot store
+        # all those. Two different fuzz cases that elicit a similar response are
+        # indistinguishable in this regard and only the one triggering payload
+        # gets stored here. This does not always model reality. If fuzzing a
+        # field triggers an issue, you should thoroughly fuzz-test that field
+        # separately.
+
+        # TODO: Put everything into single column, so that is instantly query as well? JSON field would allow structure
+        # This really forces the DB structure and semantics, we don't want that!
+
+        hits = (
+            session.query(Issue)
+            .filter(Issue.scenario_id == self.scenario_id)
+            .filter(Issue.req_method == self.req_method)
+            .filter(Issue.resp_statuscode == self.resp_statuscode)
+            .filter(Issue.server_protocol_error == self.server_protocol_error)
+            .filter(Issue.server_error_text_detected == self.server_error_text_detected)
+            .filter(Issue.server_error_text_matched == self.server_error_text_matched)
+            .filter(Issue.server_timeout == self.server_timeout)
+            .all()
+        )
+        return len(hits) > 0
+
     @staticmethod
     def from_resp_or_exc(scenario_id, resp_or_exc):
 

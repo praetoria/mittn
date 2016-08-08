@@ -39,30 +39,9 @@ class Archiver(object):
             # No false positive db is in use, all findings are treated as new
             return False
 
-        # XXX: Because each fuzz case is likely to be separate, we cannot store
-        # all those. Two different fuzz cases that elicit a similar response are
-        # indistinguishable in this regard and only the one triggering payload
-        # gets stored here. This does not always model reality. If fuzzing a
-        # field triggers an issue, you should thoroughly fuzz-test that field
-        # separately.
-
-        # TODO: Put everything into single column, so that is instantly query as well? JSON field would allow structure
-        # This really forces the DB structure and semantics, we don't want that!
-
         # Check whether we already know about this
-        hits = (
-            self.session.query(Issue)
-            .filter(Issue.scenario_id == issue.scenario_id)
-            .filter(Issue.req_method == issue.req_method)
-            .filter(Issue.resp_statuscode == issue.resp_statuscode)
-            .filter(Issue.server_protocol_error == issue.server_protocol_error)
-            .filter(Issue.server_error_text_detected == issue.server_error_text_detected)
-            .filter(Issue.server_error_text_matched == issue.server_error_text_matched)
-            .filter(Issue.server_timeout == issue.server_timeout)
-            .all()
-        )
 
-        return len(hits) > 0
+        return issue.known_false_positive(self.session)
 
     def add_issue(self, issue):
         """Add a finding into the database as a new finding
