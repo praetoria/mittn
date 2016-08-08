@@ -1,4 +1,4 @@
-from .tlsdefaults import TlsDefaultConfig
+from .tlsdefaults import TlsDefaults
 from ..config import Config
-Config.tools['tlschecker'] = TlsDefaultConfig()
+Config.tools['tlschecker'] = TlsDefaults()
 

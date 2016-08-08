@@ -1,4 +1,4 @@
-class TlsDefaultConfig(object):
+class TlsDefaults(object):
     """
     Remember to add the name of a new list attribute
     you want to add in the list_attributes list,
