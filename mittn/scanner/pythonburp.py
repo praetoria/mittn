@@ -27,8 +27,6 @@ class pythonBurp():
         pass
 
     def init():
-        #Check that we have a correctly installed Burp Suite and the scanner
-        #driver is available
         logging.getLogger("requests").setLevel(logging.WARNING)
         burpprocess = start_burp(context)
 
@@ -49,9 +47,8 @@ class pythonBurp():
             kill_subprocess(burpprocess)
             raise Exception( "Timed out communicating to headless-scanner-driver extension over %s. Is something else running there?" % 
                            (context.burp_proxy_address))
+	def kill():
 
-        # Shut down Burp Suite. Again, see the scanner driver plugin docs for further info.
-    
         poll = select.poll()
         poll.register(burpprocess.stdout, select.POLLNVAL | select.POLLHUP)  # pylint: disable=E1101
         try:
@@ -67,14 +64,9 @@ class pythonBurp():
         return True
 
     
-    def do_test(context, timeout):
-        #Call scenarios.py to run a test scenario referenced by the scenario identifier
-
-        # Run the scenario (implemented in scenarios.py)
-        burpprocess = start_burp(context)
-        timeout = int(timeout)
-        scan_start_time = time.time()  # Note the scan start time
-        run_scenario(context.scenario_id, context.burp_proxy_address, burpprocess)
+    def finnish(context, timeout):
+        #Call to run a test scenario referenced by the scenario identifier
+        #scan_start_time = time.time()  # Note the scan start time
     
         # Wait for end of scan or timeout
         re_abandoned = re.compile("^abandoned")  # Regex to match abandoned scan statuses
@@ -116,7 +108,8 @@ class pythonBurp():
                 raise Exception("Scans did not finish in %s minutes, timed out. Scan statuses were: %s" %
                                (timeout, proxy_message))
             time.sleep(10)  # Poll again in 10 seconds
-    
+
+	def collect():
         # Retrieve scan results and request clean exit
     
         try:
@@ -137,6 +130,7 @@ class pythonBurp():
     
         # Wait for Burp to exit
     
+	def kill():
         poll = select.poll()
         poll.register(burpprocess.stdout, select.POLLNVAL | select.POLLHUP)  # pylint: disable-msg=E1101
         descriptors = poll.poll(10000)
@@ -144,24 +138,4 @@ class pythonBurp():
             kill_subprocess(burpprocess)
             raise Exception("Burp Suite clean exit took more than 10 seconds, killed")
 
-        return True
-
-    def check_new_findings(context):
-        #Check whether the findings reported by Burp have already been found earlier
-        scanissues = context.results
-
-        # Go through each issue, and add issues that aren't in the database
-        # into the database. If we've found new issues, assert False.
-
-        new_items = 0
-        for issue in scanissues:
-            issue['scenario_id'] = context.scenario_id
-            if scandb.known_false_positive(context, issue) is False:
-                new_items += 1
-                scandb.add_false_positive(context, issue)
-
-        unprocessed_items = scandb.number_of_new_in_database(context)
-    
-        if unprocessed_items > 0:
-            raise Exception("Unprocessed findings in database. %s new issue(s), total %s issue(s)." % (new_items, unprocessed_items))
         return True
