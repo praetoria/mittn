@@ -51,7 +51,6 @@ class Archiver(object):
 
         # If no db in use, simply fail now
         if self.session is None:
-            # XXX: Long assert messages seem to fail, so we truncate uri and submission to 200 bytes.
             raise ValueError(
                 "Response from server failed a check, and no errors "
                 "database is in use."
