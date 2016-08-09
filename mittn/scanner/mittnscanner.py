@@ -17,12 +17,14 @@ class MittnScanner(object):
         as a parameter and a list of test names to feed it.
         """
         # TODO: This is just a preliminary draft.
+        #self.burp.start()
         for test in tests:
             if testfunction(test) != 0:
                 raise RuntimeError("Test '%s' failed to execute" % test)
-            #burp.finish()
-            #result = burp.collect()
+            #self.burp.finish()
+            #result = self.burp.collect()
             #self.results.append(result)
+        #self.burp.kill()
 
     def collect_results(self):
         # TODO: Return a count of new findings etc
