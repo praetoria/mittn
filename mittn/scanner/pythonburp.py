@@ -23,8 +23,10 @@ import mittn.scanner.dbtools as scandb
 from features.scenarios import *
 
 class pythonBurp():
-    def __init__(self,burpcmd, burp_cmdline):
-    self.burpcmd = burpcmd
+    def __init__(self,burp_cmdline, burp_proxy_address):
+    self.proxydict = {'http': 'http://' + burp_proxy_address,
+                     'https': 'https://' + burp_proxy_address}
+    self.proxy_address = burp_proxy_address
     self.burpcmdline = burpcmdline
 
     def start():
@@ -38,80 +40,79 @@ class pythonBurp():
         # See https://github.com/F-Secure/headless-scanner-driver for additional documentation
 
         # TODO: maybe move the following proxy code to a separate function
-        proxydict = {'http': 'http://' + context.burp_proxy_address,
-                     'https': 'https://' + context.burp_proxy_address}
+        proxydict = self.proxydict
         try:
             requests.get("http://localhost:1111", proxies=proxydict)
         except requests.exceptions.RequestException as e:
             PythonBurp.kill_subprocess(burpprocess)
             raise Exception("Could not fetch scan item status over %s (%s). Is the proxy listener on?" %
-                           (context.burp_proxy_address, e))
+                           (self.proxy_address, e))
         proxy_message = read_next_json(burpprocess)
         if proxy_message is None:
             PythonBurp.kill_subprocess(burpprocess)
             raise Exception( "Timed out communicating to headless-scanner-driver extension over %s. Is something else running there?" % 
-                           (context.burp_proxy_address))
+                           (self.proxy_address))
 
-    def kill():
+    def kill(self):
         """ Kill the burp process and gather output?
         """
 
         poll = select.poll()
-        poll.register(burpprocess.stdout, select.POLLNVAL | select.POLLHUP)  # pylint: disable=E1101
+        poll.register(self.burpprocess.stdout, select.POLLNVAL | select.POLLHUP)  # pylint: disable=E1101
         try:
-            requests.get("http://localhost:1112", proxies=proxydict)
+            requests.get("http://localhost:1112", proxies=self.proxydict)
         except requests.exceptions.RequestException as e:
-            PythonBurp.kill_subprocess(burpprocess)
+            PythonBurp.kill_subprocess(self.burpprocess)
             raise Exception( "Could not fetch scan results over %s (%s)" % 
-                           (context.burp_proxy_address, e))
+                           (self.proxy_address, e))
         descriptors = poll.poll(10000)
         if descriptors == []:
-            PythonBurp.kill_subprocess(burpprocess)
+            PythonBurp.kill_subprocess(self.burpprocess)
             raise Exception( "Burp Suite clean exit took more than 10 seconds, killed" )
         return True
 
     
-    def finish(context, timeout):
+    def finish(timeout):
         #Call to run a test scenario referenced by the scenario identifier
         #scan_start_time = time.time()  # Note the scan start time
     
         # Wait for end of scan or timeout
         re_abandoned = re.compile("^abandoned")  # Regex to match abandoned scan statuses
         re_finished = re.compile("^(abandoned|finished)")  # Regex to match finished scans
-        proxydict = {'http': 'http://' + context.burp_proxy_address,
-                     'https': 'https://' + context.burp_proxy_address}
+        proxydict = self.proxydict
+
         while True:  # Loop until timeout or all scan tasks finished
             # Get scan item status list
             try:
                 requests.get("http://localhost:1111", proxies=proxydict, timeout=1)
             except requests.exceptions.ConnectionError as error:
-                PythonBurp.kill_subprocess(burpprocess)
+                PythonBurp.kill_subprocess(self.burpprocess)
                 raise Exception("Could not communicate with headless-scanner-driver over %s (%s)" %
-                               (context.burp_proxy_address, error.reason))
+                               (self.proxy_address, error.reason))
             # Burp extensions' stdout buffers will fill with a lot of results, and
             # it hangs, so we time out here and just proceed with reading the output.
             except requests.Timeout:
                 pass
-            proxy_message = read_next_json(burpprocess)
+            proxy_message = read_next_json(self.burpprocess)
             # Go through scan item statuses statuses
             if proxy_message is None:  # Extension did not respond
-                PythonBurp.kill_subprocess(burpprocess)
-                raise Exception("Timed out retrieving scan status information from Burp Suite over %s" % context.burp_proxy_address)
+                PythonBurp.kill_subprocess(self.burpprocess)
+                raise Exception("Timed out retrieving scan status information from Burp Suite over %s" % self.proxy_address)
             finished = True
             if proxy_message == []:  # No scan items were started by extension
-                PythonBurp.kill_subprocess(burpprocess)
+                PythonBurp.kill_subprocess(self.burpprocess)
                 raise Exception("No scan items were started by Burp. Check web test case and suite scope.")
             for status in proxy_message:
                 if not re_finished.match(status):
                     finished = False
-                if hasattr(context, 'fail_on_abandoned_scans'):  # In some test setups, abandoned scans are failures, and this has been set
+                if hasattr(self, 'fail_on_abandoned_scans'):  # In some test setups, abandoned scans are failures, and this has been set
                     if re_abandoned.match(status):
-                        PythonBurp.kill_subprocess(burpprocess)
+                        PythonBurp.kill_subprocess(self.burpprocess)
                         raise Exception("Burp Suite reports an abandoned scan, but you wanted all scans to succeed. DNS problem or non-Target Scope hosts targeted in a test scenario?")
             if finished is True:  # All scan statuses were in state "finished"
                 break
             if (time.time() - scan_start_time) > (timeout * 60):
-                PythonBurp.kill_subprocess(burpprocess)
+                PythonBurp.kill_subprocess(self.burpprocess)
                 raise Exception("Scans did not finish in %s minutes, timed out. Scan statuses were: %s" %
                                (timeout, proxy_message))
             time.sleep(10)  # Poll again in 10 seconds
