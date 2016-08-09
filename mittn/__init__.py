@@ -5,3 +5,4 @@ from .archiver import Archiver
 from .tls.mittntlschecker import MittnTlsChecker, TlsChecker
 from .fuzzer.mittnfuzzer import MittnFuzzer
 from .fuzzer.target import Target
+from .scanner.mittnscanner import MittnScanner
