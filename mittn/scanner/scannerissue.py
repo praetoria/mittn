@@ -25,19 +25,14 @@ class ScannerIssue(Issue):
     protocol = Column(types.Text)
     messages = Column(types.LargeBinary)
 
-    def known_false_positive(self,session):
+    def unique_fields(self):
+        """ Returns fields used when checking for false
+        positives already present in the database
+        """
+        return [(ScannerIssue.scenario_id, self.scenario_id),
+                (ScannerIssue.url, self.url),
+                (ScannerIssue.issuetype, self.issuetype)]
 
-    """Check whether a finding already exists in the database (usually
-    a "false positive" if it does exist)
-    """
-        hits = (
-            session.query(ScannerIssue)
-            .filter(ScannerIssue.scenario_id == self.scenario_id)
-            .filter(ScannerIssue.url == self.url)
-            .filter(ScannerIssue.issuetype == self.issuetype)
-            .all()
-        )
-        return len(hits) > 0
     @staticmethod
     def issue_from_dict(scenario_id,obj):
     # TODO: make sure this works

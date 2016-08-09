@@ -31,7 +31,10 @@ class FuzzerIssue(Issue):
     resp_body = Column(types.LargeBinary, default=b'')
     resp_history = Column(types.LargeBinary, default=b'')
 
-    def known_false_positive(self,session):
+    def unique_fields(self):
+        """ Returns class attributes and fields used when checking for false
+        positives already present in the database
+        """
         # XXX: Because each fuzz case is likely to be separate, we cannot store
         # all those. Two different fuzz cases that elicit a similar response are
         # indistinguishable in this regard and only the one triggering payload
@@ -39,21 +42,14 @@ class FuzzerIssue(Issue):
         # field triggers an issue, you should thoroughly fuzz-test that field
         # separately.
 
-        # TODO: Put everything into single column, so that is instantly query as well? JSON field would allow structure
-        # This really forces the DB structure and semantics, we don't want that!
-
-        hits = (
-            session.query(FuzzerIssue)
-            .filter(FuzzerIssue.scenario_id == self.scenario_id)
-            .filter(FuzzerIssue.req_method == self.req_method)
-            .filter(FuzzerIssue.resp_statuscode == self.resp_statuscode)
-            .filter(FuzzerIssue.server_protocol_error == self.server_protocol_error)
-            .filter(FuzzerIssue.server_error_text_detected == self.server_error_text_detected)
-            .filter(FuzzerIssue.server_error_text_matched == self.server_error_text_matched)
-            .filter(FuzzerIssue.server_timeout == self.server_timeout)
-            .all()
-        )
-        return len(hits) > 0
+        return [(FuzzerIssue.scenario_id, self.scenario_id),
+                (FuzzerIssue.req_method, self.req_method),
+                (FuzzerIssue.resp_statuscode, self.resp_statuscode),
+                (FuzzerIssue.server_protocol_error,
+                    self.server_protocol_error),
+                (FuzzerIssue.server_error_text_detected,
+                    self.server_error_text_detected),
+                (FuzzerIssue.server_timeout, self.server_timeout)]
 
     @staticmethod
     def from_resp_or_exc(scenario_id, resp_or_exc):

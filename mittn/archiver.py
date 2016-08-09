@@ -40,7 +40,13 @@ class Archiver(object):
 
         # Check whether we already know about this
 
-        return issue.known_false_positive(self.session)
+        q = self.session.query(type(issue))
+        # filter all corresponding fields
+        for cls_attr, attr in issue.unique_fields():
+            q = q.filter(cls_attr == attr)
+
+        hits = q.all()
+        return len(hits) > 0
 
     def add_issue(self, issue):
         """Add a finding into the database as a new finding
