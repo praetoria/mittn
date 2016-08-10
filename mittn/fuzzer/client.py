@@ -2,8 +2,6 @@ import socket
 import codecs
 
 from requests import Request
-from requests.exceptions import Timeout, RequestException
-from requests.models import Response
 from requests.sessions import Session
 
 from mittn.fuzzer.utils import *
@@ -17,7 +15,8 @@ class Client(Session):
         #XXX here we are overriding the 'strict' error handler with the
         #'ignore' handler of the codecs module. This will make utf-8
         #conversion succeed by removing invalid characters from the 
-        #fuzzed data.
+        #fuzzed data. This will also affect calls to decode htat are done
+        #by other code, like the requests library
         #https://docs.python.org/3.4/library/stdtypes.html#bytes.decode
         codecs.register_error('strict', lambda err:('', err.start+1))
 
@@ -49,7 +48,7 @@ class Client(Session):
             req.url  = target.uri
             req.data = payload
         else:
-            raise NotImplemented
+            raise NotImplementedError
         resp = self.send(
             request = req.prepare(),
             timeout = self.timeout)

@@ -1,5 +1,4 @@
 from sqlalchemy import Column, types
-from sqlalchemy.ext.declarative.api import declarative_base
 import datetime
 
 from requests.exceptions import RequestException
@@ -15,7 +14,7 @@ class FuzzerIssue(Issue):
     # bad Unicode, just in case some component downstream tries to parse
     # a string provided as Unicode.
      
-    # XXX fields that are used in all tools come from issue.py
+    # XXX fields that are used in all tools are inherited from Issue
 
     server_protocol_error = Column(types.String, default='')
     server_timeout = Column(types.Boolean, default=False, nullable=False)
