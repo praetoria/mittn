@@ -61,13 +61,8 @@ class Archiver(object):
                 "Response from server failed a check, and no errors "
                 "database is in use."
                 "Scenario id = {issue.scenario_id}, "
-                "error = {issue.server_protocol_error}, "
-                "timeout = {issue.server_timeout}, "
-                "status = {issue.resp_statuscode}, "
-                "URL = {url}, "
-                "req_method = {issue.req_method}, "
-                "submission = {submission}".format(
-                    issue=issue, url=issue.url, submission=issue.resp_body
+                "URL = {issue.url}, ".format(
+                    issue=issue
                 ))
 
         # Add the finding into the database
