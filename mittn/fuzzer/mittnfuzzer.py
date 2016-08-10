@@ -42,7 +42,7 @@ class MittnFuzzer(object):
 
     def init(self):
         #create and test database connection
-        self.archiver.init(FuzzerIssue) # Hacky
+        self.archiver.init(FuzzerIssue)
         #configure how issues are created
         pass
 
@@ -64,5 +64,4 @@ class MittnFuzzer(object):
             for response in responses:
                 if self.checker.check(response, None):
                     newissue = FuzzerIssue.from_resp_or_exc(target.scenario_id, response)
-                    if not self.archiver.known_false_positive(newissue):
-                        self.archiver.add_issue(newissue)
+                    self.archiver.add_if_not_found(newissue)

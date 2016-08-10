@@ -36,12 +36,13 @@ class ScannerIssue(Issue):
     @staticmethod
     def issue_from_dict(scenario_id,obj):
     # TODO: make sure this works
-        issue = Issue(
+        issue = ScannerIssue(
                 new_issue=True,
                 timestamp=datetime.datetime.utcnow(),
-                test_runner_host="FIXME"
+                test_runner_host="FIXME",
                 scenario_id=scenario_id,
                 )
-        for key in obj.keys:
+        for key in obj.keys():
             setattr(issue,key,obj[key])
+        issue.messages = bytes(json.dumps(issue.messages),'utf-8')
         return issue

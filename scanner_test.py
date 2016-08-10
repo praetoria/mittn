@@ -12,8 +12,10 @@ tests = [
         'xss2',
         ]
 
-a = Archiver('sqlite3:////tmp/db')
+a = Archiver('sqlite:////tmp/db')
 scanner = MittnScanner(archiver=a)
+# initialize db
+scanner.init()
 scanner.run_tests(testfunction,tests)
 results = scanner.collect_results()
 for r in results:
