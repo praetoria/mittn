@@ -1,8 +1,7 @@
-from mittn import Target, MittnFuzzer, Config
+from mittn import Target, MittnFuzzer, Archiver
 
-c = Config("fuzzer")
-c.db_url = "sqlite:////tmp/db"
-m = MittnFuzzer(config=c)
+a = Archiver("sqlite:////tmp/db")
+m = MittnFuzzer(archiver=a)
 m.init()
 t = Target('simple_test',
            'GET',
