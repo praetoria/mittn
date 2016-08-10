@@ -2,8 +2,8 @@ from mittn import MittnScanner
 from mittn import Archiver
 from subprocess import call
 
-def testfunction(test):
-    s = call('curl http://localhost:8000/%s 1>/dev/null 2>/dev/null' % test,
+def testfunction(test,proxy):
+    s = call('curl http://localhost:8000/%s --proxy http://%s 1>/dev/null 2>/dev/null' % (test,proxy),
             shell=True)
     return s
 

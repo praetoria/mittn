@@ -19,17 +19,15 @@ import logging
 import os
 from mittn.scanner.proxy_comms import *
 import mittn.scanner.dbtools as scandb
-# Import positive test scenario implementations
-from features.scenarios import *
 
-class pythonBurp():
+class PythonBurp():
     def __init__(self,cmdline, proxy_address):
 	    self.proxydict = {'http': 'http://' + proxy_address,
 	                     'https': 'https://' + proxy_address}
 	    self.proxy_address = proxy_address
 	    self.cmdline = cmdline
 
-    def start():
+    def start(self):
         """Start Burp Suite as subprocess and wait for the extension to be ready."""
         burpcommand = shlex.split(self.cmdline)
         self.process = subprocess.Popen(burpcommand, stdout=subprocess.PIPE)
@@ -87,7 +85,7 @@ class pythonBurp():
     
     def finish(self, timeout):
         #Call to run a test scenario referenced by the scenario identifier
-        #scan_start_time = time.time()  # Note the scan start time
+        scan_start_time = time.time()  # Note the scan start time
     
         # Wait for end of scan or timeout
         re_abandoned = re.compile("^abandoned")  # Regex to match abandoned scan statuses
@@ -130,11 +128,12 @@ class pythonBurp():
                                (timeout, proxy_message))
             time.sleep(10)  # Poll again in 10 seconds
 
-	def collect(self):  # TODO
+    def collect(self):
+        # TODO: only reset burp without killing it
         # Retrieve scan results and request clean exit
     
         try:
-            requests.get("http://localhost:1112", proxies=proxydict, timeout=1)
+            requests.get("http://localhost:1112", proxies=self.proxydict, timeout=1)
         except requests.exceptions.ConnectionError as error:
             self.kill_subprocess()
             raise Exception("Could not communicate with headless-scanner-driver over %s (%s)" %
@@ -147,7 +146,7 @@ class pythonBurp():
         if proxy_message is None:
             self.kill_subprocess()
             raise Exception("Timed out retrieving scan results from Burp Suite over %s" % self.proxy_address)
-        self.results = proxy_message  # Store results for baseline delta checking
+        proxy_message  # Store results for baseline delta checking
     
         # Wait for Burp to exit
         poll = select.poll()
@@ -157,7 +156,7 @@ class pythonBurp():
             self.kill_subprocess()
             raise Exception("Burp Suite clean exit took more than 10 seconds, killed")
 
-        return True
+        return proxy_message
 
     def kill_subprocess(self):
         """Kill a subprocess, ignoring errors if it's already exited."""
