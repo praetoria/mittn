@@ -1,8 +1,5 @@
-from sqlalchemy import create_engine#, Column, types
+from sqlalchemy import create_engine
 from sqlalchemy.orm.session import sessionmaker
-
-from requests.exceptions import RequestException
-from requests.models import Response
 
 class Archiver(object):
 
