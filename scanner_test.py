@@ -14,8 +14,7 @@ tests = [
 
 a = Archiver('sqlite:////tmp/db')
 scanner = MittnScanner(archiver=a)
-# initialize db
-scanner.init()
+scanner.init() # initialize db
 scanner.run_tests(testfunction,tests)
 results = scanner.collect_results()
 for r in results:
