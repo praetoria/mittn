@@ -54,13 +54,10 @@ class PythonSslyze(object):
         return xml
 
 
+# TODO: either remove this class or initialize MittnTlsChecker with this
 class Target(object):
     """ Contains hostname, portnumber and a dict
-        of protocols that should be enabled/disabled.
-
-        Instances of this class are also used for saving
-        sslyze's results per tested protocol in an attribute
-        named xmloutput[protocol]."""
+        of protocols that should be enabled/disabled. """
 
     def __init__(self,host,port):
         self.host = host
@@ -75,17 +72,16 @@ class MittnTlsChecker(object):
         Additional checks can be implemented by providing a
         customized Checker object or a subclassed instance."""
 
-    def __init__(self,config_path="./mittn.conf",sslyze_path=None,
+    def __init__(self,sslyze_path=None,
             config=None, checker=None):
         # Config uses defaults
         # unless it finds settings in the provided file
-        self.config = config or Config(config_path)
+        self.config = config or Config('tlschecker')
         self.sslyze = PythonSslyze(self.config.sslyze_path)
 
         # checker checks for misconfigurations
         # by analyzing the xml produced by PythonSslyze
         self.checker = checker or TlsChecker(config)
-        self.checker.config = self.config
 
     def run(self,host,port=443):
         target = Target(host,port)
