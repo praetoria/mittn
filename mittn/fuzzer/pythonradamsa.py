@@ -48,14 +48,12 @@ class PythonRadamsa(object):
         fuzz_case_directory = tempfile.mkdtemp()
 
         try:
-            # XXX: Create file per string, wtf
             for valid_string in valuelist:
                 handle, tmpfile_path = tempfile.mkstemp(suffix='.case', dir=valid_case_directory)
 
                 # Radamsa only operates on strings, so make numbers and booleans
                 # into strings. (No, this won't fuzz effectively, use static
                 # injection to cover those cases.)
-                # TODO: Um... what? That is HUGE!
                 if isinstance(valid_string, (bool, six.integer_types, float)):
                     valid_string = str(valid_string)
 

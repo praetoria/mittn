@@ -1,12 +1,3 @@
-import codecs
-import copy
-import datetime
-import json
-import os
-import re
-
-import six
-
 from mittn.archiver import Archiver
 from mittn.fuzzer.pythonradamsa import PythonRadamsa
 from mittn.fuzzer.anomalygenerator import AnomalyGenerator

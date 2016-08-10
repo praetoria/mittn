@@ -41,7 +41,7 @@ class Checker(object):
                     resp_or_exc.server_error_text_matched = ', '.join([body_errors[m] for m in matches])  # Hacky
                     return True
         else:
-            raise NotImplemented
+            raise NotImplementedError
 
         return False
 

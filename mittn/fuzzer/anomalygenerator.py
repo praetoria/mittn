@@ -47,7 +47,7 @@ class AnomalyGenerator(object):
             target[None].append(source)
 
         else:
-            raise NotImplemented
+            raise NotImplementedError
 
     def create_anomalies(self, branch, anomaly_dict, anomaly_key=None):
         """Walk through a data structure recursively and replace each key and value with an injected (fuzz) case
@@ -114,7 +114,7 @@ class AnomalyGenerator(object):
         # injection
         # FIXME: JSON probably cannot contain the *non-fuzzed* version of it (fuzzed version is str), so let's disable this!
         # return [branch]
-        raise NotImplemented
+        raise NotImplementedError
 
     def generate_anomalies(self, wireframe, submissions, amount):
         # Collect values per key from all submissions
