@@ -133,7 +133,7 @@ class PythonBurp():
         # Retrieve scan results and request clean exit
     
         try:
-            requests.get("http://localhost:1112", proxies=self.proxydict, timeout=1)
+            requests.get("http://localhost:1113", proxies=self.proxydict, timeout=1)
         except requests.exceptions.ConnectionError as error:
             self.kill_subprocess()
             raise Exception("Could not communicate with headless-scanner-driver over %s (%s)" %
@@ -146,15 +146,6 @@ class PythonBurp():
         if proxy_message is None:
             self.kill_subprocess()
             raise Exception("Timed out retrieving scan results from Burp Suite over %s" % self.proxy_address)
-        proxy_message  # Store results for baseline delta checking
-    
-        # Wait for Burp to exit
-        poll = select.poll()
-        poll.register(self.process.stdout, select.POLLNVAL | select.POLLHUP)  # pylint: disable-msg=E1101
-        descriptors = poll.poll(10000)
-        if descriptors == []:
-            self.kill_subprocess()
-            raise Exception("Burp Suite clean exit took more than 10 seconds, killed")
 
         return proxy_message
 

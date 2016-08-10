@@ -30,4 +30,4 @@ class MittnScanner(object):
 
     def collect_results(self):
         # TODO: Return a count of new findings etc
-        return len(self.results)
+        return self.results
