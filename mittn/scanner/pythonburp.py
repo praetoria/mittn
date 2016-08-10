@@ -27,6 +27,7 @@ class PythonBurp():
         """Start Burp Suite as subprocess and wait for the extension to be ready."""
         burpcommand = shlex.split(self.cmdline)
         self.process = subprocess.Popen(burpcommand, stdout=subprocess.PIPE)
+        # get next json output from the burp process
         proxy_message = self.read_next_json()
         if proxy_message is None:
             self.kill_subprocess()
@@ -39,7 +40,6 @@ class PythonBurp():
         # so we just wait a bit.
         time.sleep(5)
 
-        # TODO: maybe split this function here? move following proxy code to a separate function
         """ Check that the extension is working."""
         logging.getLogger("requests").setLevel(logging.WARNING)
 
@@ -61,8 +61,7 @@ class PythonBurp():
                            (self.proxy_address))
 
     def kill(self):
-        """ Kill the burp process
-        """
+        """ Kill the burp process """
 
         poll = select.poll()
         poll.register(self.process.stdout, select.POLLNVAL | select.POLLHUP)  # pylint: disable=E1101
@@ -78,18 +77,18 @@ class PythonBurp():
 
     
     def finish(self, timeout):
-        #Call to run a test scenario referenced by the scenario identifier
+        """ Wait for ongoing scans to finish """
+
         scan_start_time = time.time()  # Note the scan start time
     
         # Wait for end of scan or timeout
         re_abandoned = re.compile("^abandoned")  # Regex to match abandoned scan statuses
         re_finished = re.compile("^(abandoned|finished)")  # Regex to match finished scans
-        proxydict = self.proxydict
 
         while True:  # Loop until timeout or all scan tasks finished
             # Get scan item status list
             try:
-                requests.get("http://localhost:1111", proxies=proxydict, timeout=1)
+                requests.get("http://localhost:1111", proxies=self.proxydict, timeout=1)
             except requests.exceptions.ConnectionError as error:
                 self.kill_subprocess()
                 raise Exception("Could not communicate with headless-scanner-driver over %s (%s)" %
@@ -100,16 +99,17 @@ class PythonBurp():
                 pass
             proxy_message = self.read_next_json()
             # Go through scan item statuses statuses
-            if proxy_message is None:  # Extension did not respond
+            if proxy_message is None:  # The extension did not respond
                 self.kill_subprocess()
                 raise Exception("Timed out retrieving scan status information from Burp Suite over %s" % self.proxy_address)
             finished = True
-            if proxy_message == []:  # No scan items were started by extension
+            if proxy_message == []:  # No scan items were started by the extension
                 self.kill_subprocess()
                 raise Exception("No scan items were started by Burp. Check web test case and suite scope.")
             for status in proxy_message:
                 if not re_finished.match(status):
                     finished = False
+                # TODO: currently the fail_on_abandoned_scans option is not used at all
                 if hasattr(self, 'fail_on_abandoned_scans'):  # In some test setups, abandoned scans are failures, and this has been set
                     if re_abandoned.match(status):
                         self.kill_subprocess()
@@ -151,7 +151,7 @@ class PythonBurp():
         return
 
     def read_next_json(self):
-        """Return the next JSON formatted output from Burp Suite as a Python object."""
+        """Return the next JSON formatted output from Burp Suite as a Python dict object."""
         # We will wait on Burp Suite's standard output
         pollobj = select.poll()
         pollobj.register(self.process.stdout, select.POLLIN)
