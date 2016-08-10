@@ -35,10 +35,10 @@ class pythonBurp():
         self.process = subprocess.Popen(burpcommand, stdout=subprocess.PIPE)
         proxy_message = read_next_json(self.process)
         if proxy_message is None:
-            PythonBurp.kill_subprocess(self.process)
+            self.kill_subprocess()
             raise ValueError("Starting Burp Suite and extension failed or timed out. Is extension output set as stdout? Command line was: %s" % self.cmdline)
         if proxy_message.get("running") != 1:
-            PythonBurp.kill_subprocess(self.process)
+            self.kill_subprocess()
             raise ValueError("Burp Suite extension responded with an unrecognised JSON message")
         # In some cases, it takes some time for the proxy listener to actually
         # have an open port; I have been unable to pin down a specific time
@@ -57,12 +57,12 @@ class pythonBurp():
         try:
             requests.get("http://localhost:1111", proxies=proxydict)
         except requests.exceptions.RequestException as e:
-            PythonBurp.kill_subprocess(self.process)
+            self.kill_subprocess()
             raise Exception("Could not fetch scan item status over %s (%s). Is the proxy listener on?" %
                            (self.proxy_address, e))
         proxy_message = read_next_json(self.process)
         if proxy_message is None:
-            PythonBurp.kill_subprocess(self.process)
+            self.kill_subprocess()
             raise Exception( "Timed out communicating to headless-scanner-driver extension over %s. Is something else running there?" % 
                            (self.proxy_address))
 
@@ -75,17 +75,17 @@ class pythonBurp():
         try:
             requests.get("http://localhost:1112", proxies=self.proxydict)
         except requests.exceptions.RequestException as e:
-            PythonBurp.kill_subprocess(self.process)
+            self.kill_subprocess()
             raise Exception( "Could not fetch scan results over %s (%s)" % 
                            (self.proxy_address, e))
         descriptors = poll.poll(10000)
         if descriptors == []:
-            PythonBurp.kill_subprocess(self.process)
+            self.kill_subprocess()
             raise Exception( "Burp Suite clean exit took more than 10 seconds, killed" )
         return True
 
     
-    def finish(timeout):
+    def finish(self, timeout):
         #Call to run a test scenario referenced by the scenario identifier
         #scan_start_time = time.time()  # Note the scan start time
     
@@ -99,7 +99,7 @@ class pythonBurp():
             try:
                 requests.get("http://localhost:1111", proxies=proxydict, timeout=1)
             except requests.exceptions.ConnectionError as error:
-                PythonBurp.kill_subprocess(self.process)
+                self.kill_subprocess()
                 raise Exception("Could not communicate with headless-scanner-driver over %s (%s)" %
                                (self.proxy_address, error.reason))
             # Burp extensions' stdout buffers will fill with a lot of results, and
@@ -109,34 +109,34 @@ class pythonBurp():
             proxy_message = read_next_json(self.process)
             # Go through scan item statuses statuses
             if proxy_message is None:  # Extension did not respond
-                PythonBurp.kill_subprocess(self.process)
+                self.kill_subprocess()
                 raise Exception("Timed out retrieving scan status information from Burp Suite over %s" % self.proxy_address)
             finished = True
             if proxy_message == []:  # No scan items were started by extension
-                PythonBurp.kill_subprocess(self.process)
+                self.kill_subprocess()
                 raise Exception("No scan items were started by Burp. Check web test case and suite scope.")
             for status in proxy_message:
                 if not re_finished.match(status):
                     finished = False
                 if hasattr(self, 'fail_on_abandoned_scans'):  # In some test setups, abandoned scans are failures, and this has been set
                     if re_abandoned.match(status):
-                        PythonBurp.kill_subprocess(self.process)
+                        self.kill_subprocess()
                         raise Exception("Burp Suite reports an abandoned scan, but you wanted all scans to succeed. DNS problem or non-Target Scope hosts targeted in a test scenario?")
             if finished is True:  # All scan statuses were in state "finished"
                 break
             if (time.time() - scan_start_time) > (timeout * 60):
-                PythonBurp.kill_subprocess(self.process)
+                self.kill_subprocess()
                 raise Exception("Scans did not finish in %s minutes, timed out. Scan statuses were: %s" %
                                (timeout, proxy_message))
             time.sleep(10)  # Poll again in 10 seconds
 
-	def collect():  # TODO
+	def collect(self):  # TODO
         # Retrieve scan results and request clean exit
     
         try:
             requests.get("http://localhost:1112", proxies=proxydict, timeout=1)
         except requests.exceptions.ConnectionError as error:
-            PythonBurp.kill_subprocess(self.process)
+            self.kill_subprocess()
             raise Exception("Could not communicate with headless-scanner-driver over %s (%s)" %
                            (self.proxy_address, error.reason))
         # Burp extensions' stdout buffers will fill with a lot of results, and
@@ -145,7 +145,7 @@ class pythonBurp():
             pass
         proxy_message = read_next_json(self.process)
         if proxy_message is None:
-            PythonBurp.kill_subprocess(self.process)
+            self.kill_subprocess()
             raise Exception("Timed out retrieving scan results from Burp Suite over %s" % self.proxy_address)
         self.results = proxy_message  # Store results for baseline delta checking
     
@@ -154,17 +154,12 @@ class pythonBurp():
         poll.register(self.process.stdout, select.POLLNVAL | select.POLLHUP)  # pylint: disable-msg=E1101
         descriptors = poll.poll(10000)
         if descriptors == []:
-            PythonBurp.kill_subprocess(self.process)
+            self.kill_subprocess()
             raise Exception("Burp Suite clean exit took more than 10 seconds, killed")
 
         return True
 
-    ## used to start the burp process
-    @staticmethod
-    def start_burp():
-
-    @staticmethod
-    def kill_subprocess():
+    def kill_subprocess(self):
         """Kill a subprocess, ignoring errors if it's already exited."""
         try:
             self.process.kill()
