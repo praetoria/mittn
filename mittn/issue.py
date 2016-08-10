@@ -1,9 +1,5 @@
 from sqlalchemy import Column, types
 from sqlalchemy.ext.declarative.api import declarative_base
-import datetime
-
-from requests.exceptions import RequestException
-from requests.models import Response
 
 Base = declarative_base()
 
