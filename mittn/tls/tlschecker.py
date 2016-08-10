@@ -5,11 +5,11 @@ import pytz
 import dateutil.parser
 import dateutil.relativedelta
 from datetime import datetime
-import xml.etree.ElementTree as ET
 
 class Check(object):
     """
-A class for the check object which holds all relevant information.
+A class for the check object which holds all relevant
+information and is formatted nicely into a string.
 State is initalized as skipped and changed accordingly when checks are run.
     """
     def __init__(self,title,proto):
@@ -94,7 +94,6 @@ class TlsChecker(object):
                     skip_rest = True
                 except ValueError as e:
                 # probably failed to read the xml
-                    print(ET.dump(self.xml))
                     print(str(e))
 
         for proto in self.config.protocols_disabled:
