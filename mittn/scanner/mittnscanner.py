@@ -21,7 +21,6 @@ class MittnScanner(object):
         """ Takes a test function which takes a test name
         as a parameter and a list of test names to feed it.
         """
-        # TODO: This is just a preliminary draft.
         try:
             self.burp.start()
             for test in tests:
@@ -38,5 +37,4 @@ class MittnScanner(object):
             self.burp.kill()
 
     def collect_results(self):
-        # TODO: Return a count of new findings etc
         return self.results

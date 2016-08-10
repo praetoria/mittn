@@ -7,7 +7,6 @@ See LICENSE for details
 Burp and Burp Suite are trademarks of Portswigger, Ltd.
 """
 
-from behave import *
 import shlex
 import subprocess
 import select
@@ -16,9 +15,6 @@ import json
 import time
 import re
 import logging
-import os
-from mittn.scanner.proxy_comms import *
-import mittn.scanner.dbtools as scandb
 
 class PythonBurp():
     def __init__(self,cmdline, proxy_address):
@@ -31,7 +27,7 @@ class PythonBurp():
         """Start Burp Suite as subprocess and wait for the extension to be ready."""
         burpcommand = shlex.split(self.cmdline)
         self.process = subprocess.Popen(burpcommand, stdout=subprocess.PIPE)
-        proxy_message = read_next_json(self.process)
+        proxy_message = self.read_next_json()
         if proxy_message is None:
             self.kill_subprocess()
             raise ValueError("Starting Burp Suite and extension failed or timed out. Is extension output set as stdout? Command line was: %s" % self.cmdline)
@@ -58,14 +54,14 @@ class PythonBurp():
             self.kill_subprocess()
             raise Exception("Could not fetch scan item status over %s (%s). Is the proxy listener on?" %
                            (self.proxy_address, e))
-        proxy_message = read_next_json(self.process)
+        proxy_message = self.read_next_json()
         if proxy_message is None:
             self.kill_subprocess()
             raise Exception( "Timed out communicating to headless-scanner-driver extension over %s. Is something else running there?" % 
                            (self.proxy_address))
 
     def kill(self):
-        """ Kill the burp process and gather output?
+        """ Kill the burp process
         """
 
         poll = select.poll()
@@ -74,8 +70,6 @@ class PythonBurp():
             requests.get("http://localhost:1112", proxies=self.proxydict)
         except requests.exceptions.RequestException as e:
             self.kill_subprocess()
-            raise Exception( "Could not fetch scan results over %s (%s)" % 
-                           (self.proxy_address, e))
         descriptors = poll.poll(10000)
         if descriptors == []:
             self.kill_subprocess()
@@ -104,7 +98,7 @@ class PythonBurp():
             # it hangs, so we time out here and just proceed with reading the output.
             except requests.Timeout:
                 pass
-            proxy_message = read_next_json(self.process)
+            proxy_message = self.read_next_json()
             # Go through scan item statuses statuses
             if proxy_message is None:  # Extension did not respond
                 self.kill_subprocess()
@@ -129,8 +123,7 @@ class PythonBurp():
             time.sleep(10)  # Poll again in 10 seconds
 
     def collect(self):
-        # TODO: only reset burp without killing it
-        # Retrieve scan results and request clean exit
+        # Retrieve scan results
     
         try:
             requests.get("http://localhost:1113", proxies=self.proxydict, timeout=1)
@@ -142,7 +135,7 @@ class PythonBurp():
         # it hangs, so we time out here and just proceed with reading the output.
         except requests.Timeout:
             pass
-        proxy_message = read_next_json(self.process)
+        proxy_message = self.read_next_json()
         if proxy_message is None:
             self.kill_subprocess()
             raise Exception("Timed out retrieving scan results from Burp Suite over %s" % self.proxy_address)
@@ -156,3 +149,25 @@ class PythonBurp():
         except OSError:
             pass
         return
+
+    def read_next_json(self):
+        """Return the next JSON formatted output from Burp Suite as a Python object."""
+        # We will wait on Burp Suite's standard output
+        pollobj = select.poll()
+        pollobj.register(self.process.stdout, select.POLLIN)
+        jsonobject = None  # Default to a failure
+        while True:
+            # Wait for max. 30 s, if timeout, return None.
+            descriptors = pollobj.poll(30000)
+            if descriptors == []:
+                break
+            # Read a line; if not JSON, continue polling with a new timeout.
+            line = self.process.stdout.readline()
+            if str(line) == '':  # Burp Suite has exited
+                break
+            try:
+                jsonobject = json.loads(str(line,'utf-8'))
+            except ValueError:
+                continue
+            break
+        return jsonobject

@@ -26,7 +26,7 @@ class ScannerIssue(Issue):
     messages = Column(types.LargeBinary)
 
     def unique_fields(self):
-        """ Returns fields used when checking for false
+        """ These fields are used when checking for false
         positives already present in the database
         """
         return [(ScannerIssue.scenario_id, self.scenario_id),
@@ -35,7 +35,6 @@ class ScannerIssue(Issue):
 
     @staticmethod
     def issue_from_dict(scenario_id,obj):
-    # TODO: make sure this works
         issue = ScannerIssue(
                 new_issue=True,
                 timestamp=datetime.datetime.utcnow(),
