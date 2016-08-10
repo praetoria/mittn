@@ -26,10 +26,10 @@ def read_next_json(process):
             break
         # Read a line; if not JSON, continue polling with a new timeout.
         line = process.stdout.readline()
-        if line == '':  # Burp Suite has exited
+        if str(line) == '':  # Burp Suite has exited
             break
         try:
-            jsonobject = json.loads(line)
+            jsonobject = json.loads(str(line,'utf-8'))
         except ValueError:
             continue
         break
