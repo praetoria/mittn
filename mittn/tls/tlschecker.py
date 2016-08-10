@@ -113,7 +113,7 @@ class TlsChecker(object):
         ret = {"PASS":[], "FAIL":[], "SKIP":[]}
         for c in checks:
             ret[c.state].append(c)
-        return (ret["PASS"],ret["FAIL"],ret["SKIP"])
+        return (ret["FAIL"],ret["PASS"],ret["SKIP"])
 
     # make sure connection is successful
     def proto_enabled(self):
