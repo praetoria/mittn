@@ -10,7 +10,8 @@ class MittnScanner(object):
         if hasattr(self.config,'db_url'):
             db_url = self.config.db_url
         self.archiver = archiver or Archiver(db_url)
-        self.burp = burp or PythonBurp(self.config.burp_cmdline,
+        self.burp = burp or PythonBurp(self.config.burp_cmdline +
+                " " + self.config.burp_path,
                 self.config.burp_proxy_address)
         self.results = []
     
@@ -25,7 +26,6 @@ class MittnScanner(object):
             self.burp.start()
             for test in tests:
                 if testfunction(test,self.config.burp_proxy_address) != 0:
-                    self.burp.kill()
                     raise RuntimeError("Test '%s' failed to execute" % test)
                 self.burp.finish(int(self.config.timeout))
                 result = self.burp.collect()
