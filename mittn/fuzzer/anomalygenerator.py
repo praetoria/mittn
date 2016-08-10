@@ -1,7 +1,7 @@
 from mittn.fuzzer.static_anomalies import STATIC_ANOMALIES
+# TODO: get rid of six, as this project is no longer compatible with python2.7
 import six
 import copy
-import tempfile
 
 class AnomalyGenerator(object):
 
