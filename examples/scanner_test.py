@@ -3,8 +3,10 @@ from mittn import Archiver
 from subprocess import call
 
 def testfunction(test,proxy):
-    s = call('curl http://localhost:9000/%s?input=aoeu --proxy http://%s 1>/dev/null 2>/dev/null' % (test,proxy),
+    s = call('curl http://localhost:9000/%s?input=aoeu' +
+        ' --proxy http://%s 1>/dev/null 2>/dev/null' % (test,proxy),
             shell=True)
+    # TODO: change this into exception
     return s
 
 tests = [
