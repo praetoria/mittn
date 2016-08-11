@@ -7,10 +7,11 @@ Background
 ----------
 
 Mittn is an evolving suite of security testing tools to be run in
-Continuous Integration context. It uses Python and Behave.
+Continuous Integration context. It is written completely in Python.
 
 The idea is that security people or developers can define a hardening
-target using a human-readable language, in this case, Gherkin.
+target by writing simple scripts using Mittn suite in Python which
+they can run as part of their build process.
 
 The rationale is:
 
@@ -27,7 +28,7 @@ The rationale is:
 
 Mittn was originally inspired by Gauntlt (http://gauntlt.org/). You
 might also want to have a look at BDD-Security
-(http://www.continuumsecurity.net/bdd-intro.html) that is a pretty
+(http://www.continuumsecurity.net/bdd-intro.html) which is a pretty
 awesome system for automating security testing, and offers similar
 functionality with OWASP Zaproxy.
 
@@ -51,7 +52,7 @@ Currently, the tool implements:
   are trademarks of Portswigger, Ltd. Tested with version 1.6.07.
 
 - TLS configuration scanning using sslyze, available from
-  https://github.com/nabla-c0d3/sslyze/releases. Requires version 0.12.
+  https://github.com/nabla-c0d3/sslyze/releases. Requires version 0.13.
 
 - HTTP API fuzzing (JSON and form submissions) with Radamsa, available
   from https://github.com/aoh/radamsa. Tested with version 0.4a.

@@ -9,7 +9,7 @@ class PythonSslyze(object):
         # check that sslyze is the correct version
         try:
             output = subprocess.check_output([path, "--version"])
-            if b"0.13.6" not in output:
+            if b"0.13" not in output:
                 raise ValueError("Didn't find version 0.13.6 of sslyze in %s" % path)
         except (subprocess.CalledProcessError, OSError) as e:
             raise ValueError("Couldn't execute sslyze from %s: %s" % (path, e))
