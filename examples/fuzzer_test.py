@@ -5,9 +5,9 @@ m = MittnFuzzer(archiver=a)
 m.init()
 t = Target('simple_test',
            'GET',
-           'http://127.0.0.1:8000/',
+           'http://127.0.0.1:9000/xss1',
            'urlparams',
-           'id=1337')
+           'input=1337')
 m.add_target(t)
 
 m.fuzz()
