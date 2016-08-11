@@ -330,11 +330,11 @@ request returned a 2xx response or something.
 Running the tests
 =================
 
-Run the tests with
+Run the tests simply with
 
   python your_test_script.py
 
-with Mittn installed locally or inside a virtualenv.
+with Mittn installed from PyPi locally or inside a virtualenv.
 
 You should first try to run the tool from the command line so that you
 can determine that the proxy is started cleanly. If there is an issue,
