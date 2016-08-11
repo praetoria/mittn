@@ -317,9 +317,8 @@ its own file and import it in the test script.
 Your function needs to set the HTTP proxies appropriately, and then
 run the valid test case. 
 
-If your valid test fails, your test function should raise an exception
-with a descriptive error string so the test is aborted and marked as
-a failure.
+If your valid test fails, your test function should return False so
+the test run is aborted and marked as a failure.
 
 This will cause the test run to fail and the error message to get 
 logged. For the coverage and success of scanning, it is important
@@ -327,6 +326,7 @@ that your positive valid tests function correctly. Otherwise it is
 not guaranteed that you are actually testing anything. At a minimum,
 for example, when testing a REST API, you should check that your valid
 request returned a 2xx response or something.
+# TODO
 
 Running the tests
 =================
