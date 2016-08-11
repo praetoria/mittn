@@ -2,10 +2,12 @@ from sqlalchemy import Column, types
 import datetime
 
 from mittn.issue import Issue
+from sqlalchemy.ext.declarative.api import declarative_base
 
 import json
 
-class ScannerIssue(Issue):
+Base = declarative_base(cls=Issue)
+class ScannerIssue(Base):
     __tablename__ = 'headlessscanner_issues'
 
     # We use LargeBinary in message because it can be very big

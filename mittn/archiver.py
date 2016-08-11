@@ -10,8 +10,6 @@ class Archiver(object):
     def init(self,issuecls=None):
         """Opens the database specified in the feature file and creates tables if not already created.
 
-        :return: A database handle, or None if no database in use
-
         """
         if not self.db_url or not issuecls:
             return None  # No false positives database is in use

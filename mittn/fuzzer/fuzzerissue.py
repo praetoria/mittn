@@ -4,10 +4,12 @@ import datetime
 from requests.exceptions import RequestException
 from requests.models import Response
 from mittn.issue import Issue
+from sqlalchemy.ext.declarative.api import declarative_base
 
 import json
 
-class FuzzerIssue(Issue):
+Base = declarative_base(cls=Issue)
+class FuzzerIssue(Base):
     __tablename__ = 'httpfuzzer_issues'
 
     # We use LargeBinary to store those fields that could contain somehow
