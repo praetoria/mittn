@@ -25,8 +25,7 @@ class MittnScanner(object):
         try:
             self.burp.start()
             for test in tests:
-                if testfunction(test,self.config.burp_proxy_address) != 0:
-                    raise RuntimeError("Test '%s' failed to execute" % test)
+                testfunction(test,self.config.burp_proxy_address)
                 self.burp.finish(int(self.config.timeout))
                 result = self.burp.collect()
                 for r in result:
