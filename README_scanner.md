@@ -42,9 +42,9 @@ As a picture:
   | Browser  |----------->|Extension |
   +----------+            +----------+
 
-The test runner, Behave, starts the proxy in headless mode, and then
+The test runner script starts the proxy in headless mode, and then
 calls developer-provided project-specific positive test cases that
-generate HTTP traffic. The scripts run by Behave communicate with an
+generate HTTP traffic. The script communicates with an
 extension that is loaded within the intercepting proxy that handles
 scanning-related chores.
 
@@ -109,11 +109,10 @@ Environment requirements
 
 - A properly installed intercepting proxy.
 
-- The test driver is Behave. Behave runs BDD test cases described in
-  Gherkin, a BDD language. Changes to your tests would be likely to be
-  made to the Gherkin files that have a .feature suffix. Behave can
-  emit JUnit XML test result documents. This is likely to be your
-  preferred route of getting the test results into Jenkins.
+- The tests are written in Python by using functions imported from
+  Mittn. Any printing or outputting of results has to be done by
+  you in the script using the results provided by the MittnScanner
+  plugin.
 
 - New findings are added into an SQL database, which holds the
   information about known false positives, so that they are not
@@ -213,7 +212,7 @@ Installing the Headless Scanner Driver
   automagically for you if they don't work now. Check again the Alerts
   tab to determine if anything went wrong.
 
-- Edit mittn/features/environment.py to reflect the location where you
+- Edit your mittn.conf to reflect the location where you
   installed the proxy.
 
 What are baseline databases?
@@ -241,8 +240,8 @@ database. The latter is much easier to set up as it requires no
 database server or users to be defined.
 
 Whichever database you use, you will provide the configuration options
-in features/environment.py as a database URI. For details on the URI
-syntax, see
+in mittn.conf or in the test scripts  as a database URI. For details
+on the URI syntax, see
 http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html#database-urls.
 
 Selecting the appropriate database
@@ -277,11 +276,12 @@ the database solution you want to use:
 Configuring a false positives database
 ======================================
 
-- Edit mittn/features/environment.py so that context.dburl points to
-  your database. The pointer is an SQL Alchemy URI, and the syntax
-  varies for each database. Examples are provided in the file for
-  sqlite and PostgreSQL. Further documentation on the database URIs is
-  available on
+- Edit mittn.conf so that db_url points to
+  your database. Alternatively, you can also set it by initializing
+  Archiver in your test scripts and passing the URI to it. The pointer
+  is an SQL Alchemy URI, and the syntax varies for each database.
+  Examples are provided in the file for sqlite and PostgreSQL. Further 
+  documentation on the database URIs is available on
   http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html#database-urls.
 
 - Ensure that you have CREATE TABLE, INSERT and SELECT rights to the
@@ -298,50 +298,35 @@ Setting up the test case
 The important files that apply to the HeadlessScannerDriver.py test
 are:
 
-  1. The headless scanning tests are specified in
-     mittn/features/headless-scanning.feature. You need to edit this
-     file to describe the test targets you want to test.
+  1. The headless scanning example tests are located in
+     mittn/examples/ You can use them as a template or to
+     just see how the Mittn suite is used.
 
-  2. The headless scanning test steps are in
-     mittn/mittn/headlessscanning. There should not be a need to alter
-     anything in this directory.
+  2. General test configuration items in
+     mittn/mittn.conf; default values for the options are commented out.
 
-  3. The function that is called to run your project-specific
-     positive, valid test scenarios is in
-     mittn/features/scenarios.py. A template has been provided which
-     you can edit. You need to edit this file to run the positive
-     valid test cases; this is described in more detail below.
-
-  4. General test configuration items in
-     mittn/features/environment.py; again, a template has been
-     provided.
-
-In the features/scenarios.py, you will need to implement the valid
+In your test script, you will need to implement the valid
 test case(s) (e.g., Selenium test run(s)) in a function that gets two
 parameters: The identifier of the test case (which you can use to
 select a specific test, if you have several) and the HTTP proxy
-address.
+address. Your function is given to the scanner object.
+
+If the tests are complex it is advisable to separate the testfunction in
+its own file and import it in the test script.
 
 Your function needs to set the HTTP proxies appropriately, and then
 run the valid test case. 
 
-If your valid test fails, you should assert failure so that the test
-case is marked as a failure:
+If your valid test fails, your test function should raise an exception
+with a descriptive error string so the test is aborted and marked as
+a failure.
 
-  assert False, "Valid test scenario did not work as expected, scenario id %s" % scenario_id
-
-or something similar; this will cause the test run to fail and the
-error message to get logged. For the coverage and success of scanning,
-it is important that your positive valid tests function
-correctly. Otherwise it is not guaranteed that you are actually
-testing anything. At a minimum, for example, when testing a REST API,
-you should check that your valid request returned a 2xx response or
-something.
-
-If your tests can raise an exception, catch those and kill the Burp
-Suite process before exiting. If you leave Burp Suite running,
-subsequent tests runs will fail as Burp Suite invocations will be
-unable to bind to the proxy port.
+This will cause the test run to fail and the error message to get 
+logged. For the coverage and success of scanning, it is important
+that your positive valid tests function correctly. Otherwise it is
+not guaranteed that you are actually testing anything. At a minimum,
+for example, when testing a REST API, you should check that your valid
+request returned a 2xx response or something.
 
 Running the tests
 =================
