@@ -1,13 +1,11 @@
 from setuptools import setup, find_packages
 
-
 setup(
-    name='mittn-scanner',
+    name='mittn',
     use_scm_version={'root': '..'},
-    description='Mittn Headless Scanner',
+    description='Mittn security test automation',
     long_description='',
     classifiers=[
-          "Programming Language :: Python :: 2.7"
           "Programming Language :: Python :: 3.4"
     ],
     license='Apache License 2.0',

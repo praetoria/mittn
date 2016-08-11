@@ -5,7 +5,7 @@ from flask_admin.base import Admin
 from flask_admin.contrib.sqla.view import ModelView
 from flask_sqlalchemy import SQLAlchemy
 
-from mittn.fuzzer.fuzzing import Issue
+from mittn.fuzzer.fuzzerissue import FuzzerIssue
 
 
 def build_app():
@@ -20,7 +20,7 @@ def build_app():
 
     admin = Admin(app, name='Fuzz', template_mode='bootstrap3')
 
-    admin.add_view(ModelView(Issue, db.session))
+    admin.add_view(ModelView(FuzzerIssue, db.session))
 
     logging.basicConfig(level=logging.DEBUG)
 

@@ -46,6 +46,7 @@ class MittnFuzzer(object):
         methods = self.config.methods
         #fuzz and inject all the added targets
         for target in self.targets:
+			#TODO: test connectivity by sending the original request with valid parameters
             responses = []
             for payload in self.generator.generate_anomalies(target.valid_submission,
                     [target.valid_submission],
