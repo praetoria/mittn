@@ -46,7 +46,13 @@ class MittnFuzzer(object):
         methods = self.config.methods
         #fuzz and inject all the added targets
         for target in self.targets:
-			#TODO: test connectivity by sending the original request with valid parameters
+            #TODO: test connectivity by sending the original request with valid parameters
+            resp = self.client.do_target(target, target.method, target.valid_submission);
+            if self.checker.check(resp, None):
+                #the request either returned a bad code or an exception occured.
+                #since this is testing a vlid case, this should not happen, fail
+                #the test run and print some diagnostics.
+                raise Exception("The valid case for %s failed, check that the target is up and reachable." % (target.scenario_id))
             responses = []
             for payload in self.generator.generate_anomalies(target.valid_submission,
                     [target.valid_submission],
