@@ -1,7 +1,7 @@
 import socket
 import codecs
 
-from requests import Request
+from requests import Request, RequestException
 from requests.sessions import Session
 
 from mittn.fuzzer.utils import *
@@ -36,7 +36,7 @@ class Client(Session):
 
         if target.submission_type == 'urlparams':
             payload = dict_to_urlparams(payload)
-            req.url = target.uri + payload
+            req.url = target.uri + '?' + payload
 
         elif target.submission_type == 'json':
             payload  = serialise_to_json(payload, True)
@@ -49,15 +49,11 @@ class Client(Session):
             req.data = payload
         else:
             raise NotImplementedError
-        resp = self.send(
-            request = req.prepare(),
-            timeout = self.timeout)
-        return resp
-"""
+
         try:
             resp = self.send(
                 request = req.prepare(),
-                timeout = 30)
+                timeout = self.timeout)
         except RequestException as e:
             return e
-"""
+        return resp
