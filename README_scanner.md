@@ -326,19 +326,15 @@ that your positive valid tests function correctly. Otherwise it is
 not guaranteed that you are actually testing anything. At a minimum,
 for example, when testing a REST API, you should check that your valid
 request returned a 2xx response or something.
-# TODO
 
 Running the tests
 =================
 
 Run the tests with
 
-  behave features/yourfeaturefile.feature --junit --junit-directory PATH
+  python your_test_script.py
 
-with the mittn directory in your PYTHONPATH (or run the tool from
-mittn/), and PATH pointing where you want the JUnit XML output. If
-your test automation system does not use JUnit XML, you can, of
-course, leave those options out.
+with Mittn installed locally or inside a virtualenv.
 
 You should first try to run the tool from the command line so that you
 can determine that the proxy is started cleanly. If there is an issue,
@@ -346,6 +342,7 @@ see the section "Troubleshooting" at the end of this file.
 
 Checking the results
 ====================
+# TODO
 
 If there were any new findings (i.e., active scanner issues that were
 not previously seen for this specific test scenario), the test will
