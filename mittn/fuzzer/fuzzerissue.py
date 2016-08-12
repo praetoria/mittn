@@ -21,19 +21,19 @@ class FuzzerIssue(Base):
      
     # XXX fields that are used in all tools are inherited from Issue
 
-    server_protocol_error = Column(types.String, default='')
-    server_timeout = Column(types.Boolean, default=False, nullable=False)
-    server_error_text_detected = Column(types.Boolean, default=False, nullable=False)
-    server_error_text_matched = Column(types.String, default='')
+    server_protocol_error = Column(types.String)
+    server_timeout = Column(types.Boolean, nullable=False)
+    server_error_text_detected = Column(types.Boolean, nullable=False)
+    server_error_text_matched = Column(types.String)
 
-    req_method = Column(types.String, default='')
-    req_headers = Column(types.LargeBinary, default=b'')
-    req_body = Column(types.LargeBinary, default=b'')
+    req_method = Column(types.String)
+    req_headers = Column(types.LargeBinary)
+    req_body = Column(types.LargeBinary)
 
-    resp_statuscode = Column(types.String, default='')
-    resp_headers = Column(types.LargeBinary, default=b'')
-    resp_body = Column(types.LargeBinary, default=b'')
-    resp_history = Column(types.LargeBinary, default=b'')
+    resp_statuscode = Column(types.String)
+    resp_headers = Column(types.LargeBinary)
+    resp_body = Column(types.LargeBinary)
+    resp_history = Column(types.LargeBinary)
 
     def unique_fields(self):
         """ Returns class attributes and fields used when checking for false
@@ -51,9 +51,9 @@ class FuzzerIssue(Base):
                 (FuzzerIssue.resp_statuscode, self.resp_statuscode),
                 (FuzzerIssue.server_protocol_error,
                     self.server_protocol_error),
-                (FuzzerIssue.server_error_text_detected,
-                    self.server_error_text_detected),
-                (FuzzerIssue.server_timeout, self.server_timeout)]
+                (FuzzerIssue.server_timeout, self.server_timeout),
+                (FuzzerIssue.server_error_text_matched,
+                    self.server_error_text_matched)]
 
     @staticmethod
     def from_resp_or_exc(scenario_id, resp_or_exc):
@@ -63,6 +63,8 @@ class FuzzerIssue(Base):
             timestamp=datetime.datetime.utcnow(),  # misleading...
             test_runner_host=HOSTNAME,
             scenario_id=scenario_id,
+            server_error_text_detected=False,
+            server_timeout=False,
         )
 
         if isinstance(resp_or_exc, RequestException):

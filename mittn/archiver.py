@@ -46,7 +46,7 @@ class Archiver(object):
     def add_issue(self, issue):
         """Add a finding into the database as a new finding
 
-        :param issue: The response data structure (see httptools.py)
+        :param issue: a db object created from issue class (see issue.py)
 
         """
 
