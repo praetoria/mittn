@@ -342,7 +342,6 @@ see the section "Troubleshooting" at the end of this file.
 
 Checking the results
 ====================
-# TODO
 
 If there were any new findings (i.e., active scanner issues that were
 not previously seen for this specific test scenario), the test will
@@ -366,7 +365,7 @@ The results database has the following fields:
 - new_issue: true (or 1) if the issue is pending triage (whether or
   not it is a false positive)
 
-- issue_no: an unique id number
+- issue_no: a unique id number
 
 - timestamp: a timestamp, in UTC, of when the issue was added to the
   database. You can use this to correlate the finding against server
@@ -418,8 +417,8 @@ If starting the proxy fails, check:
 
   - whether there is an instance already running. Exit those
     instances. Only one proxy instance can bind to the same port
-    at any given time. If your test cases terminate without killing
-    the proxy process, this may leave the proxy running.
+    at any given time. Mittn scanner should always clean up the
+    burp process after running tests.
 
   - whether the proxy has been properly installed. Follow the guidance
     earlier in this document and try to create HTTP requests manually
