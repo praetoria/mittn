@@ -3,16 +3,16 @@ class FuzzerDefaults(object):
         # attributes in the config which are lists
         self.list_attributes = [
                 "methods",
-                "allowed_statuses",
-                "disallowed_statuses",
+                "allowed_status_codes",
+                "disallowed_status_codes",
                 ]
         self.defaults = """
 [fuzzer]
 methods=GET,POST
 radamsa_path=/usr/bin/radamsa
 timeout=30
-allowed_statuses=
+allowed_status_codes=
     200,404
-disallowed_statuses=
+disallowed_status_codes=
 anomalies=1
 """

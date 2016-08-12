@@ -4,15 +4,15 @@ from mittn.scanner.pythonburp import PythonBurp
 from mittn.scanner.scannerissue import ScannerIssue
 
 class MittnScanner(object):
-    def __init__(self,archiver=None,burp=None,config=None):
+    def __init__(self,archiver=None,scanner=None,config=None):
         self.config = config or Config("scanner","mittn.conf")
         db_url = None
         if hasattr(self.config,'db_url'):
             db_url = self.config.db_url
         self.archiver = archiver or Archiver(db_url)
-        self.burp = burp or PythonBurp(self.config.burp_cmdline +
-                " " + self.config.burp_path,
-                self.config.burp_proxy_address)
+        self.scanner = scanner or PythonBurp(self.config.cmdline +
+                " " + self.config.path,
+                self.config.proxy_address)
         self.results = []
     
     def init(self):
@@ -23,20 +23,20 @@ class MittnScanner(object):
         as a parameter and a list of test names to feed it.
         """
         try:
-            self.burp.start()
+            self.scanner.start()
             for test in tests:
-                if not testfunction(test,self.config.burp_proxy_address):
+                if not testfunction(test,self.config.proxy_address):
                     raise RuntimeError("Valid test scenario '%s'" +
                             " failed to execute, using proxy %s" % (test,
-                                self.config.burp_proxy_address))
-                self.burp.finish(int(self.config.timeout))
-                result = self.burp.collect()
+                                self.config.proxy_address))
+                self.scanner.finish(int(self.config.timeout))
+                result = self.scanner.collect()
                 for r in result:
                     issue = ScannerIssue.issue_from_dict(test,r)
                     self.archiver.add_if_not_found(issue)
                 self.results.append(result)
         finally:
-            self.burp.kill()
+            self.scanner.kill()
 
     def collect_results(self):
         return self.results
