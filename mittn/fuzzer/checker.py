@@ -3,29 +3,6 @@ from requests.models import Response
 
 class Checker(object):
 
-    BODY_ERROR_LIST = [
-        'string',
-        'server error',
-        # 'exception', # too generic!
-        'invalid response',
-        'bad gateway',
-        'internal ASP error',
-        'service unavailable',
-        'exceeded',
-        'premature',
-        'fatal error',
-        'proxy error',
-        'database error',
-        'backend error',
-        'mysql',
-        'root:',
-        'parse error',
-        'exhausted',
-        'warning',
-        'denied',
-        # 'failure',  # too generic!
-    ]
-
     def check(self, resp_or_exc, body_errors=None):
         """
         Check wether the server responded with something that indicated an error in the server.
