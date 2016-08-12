@@ -6,6 +6,9 @@ from sqlalchemy.ext.declarative.api import declarative_base
 
 import json
 
+import socket
+HOSTNAME = socket.gethostbyname(socket.gethostname())
+
 Base = declarative_base(cls=Issue)
 class ScannerIssue(Base):
     __tablename__ = 'headlessscanner_issues'
@@ -37,7 +40,7 @@ class ScannerIssue(Base):
         issue = ScannerIssue(
                 new_issue=True,
                 timestamp=datetime.datetime.utcnow(),
-                test_runner_host="FIXME",
+                test_runner_host=HOSTNAME,
                 scenario_id=scenario_id,
                 )
         for key in obj.keys():

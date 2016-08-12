@@ -8,6 +8,9 @@ from sqlalchemy.ext.declarative.api import declarative_base
 
 import json
 
+import socket
+HOSTNAME = socket.gethostbyname(socket.gethostname())
+
 Base = declarative_base(cls=Issue)
 class FuzzerIssue(Base):
     __tablename__ = 'httpfuzzer_issues'
@@ -58,7 +61,7 @@ class FuzzerIssue(Base):
         issue = FuzzerIssue(
             new_issue=True,
             timestamp=datetime.datetime.utcnow(),  # misleading...
-            test_runner_host='FIXME',
+            test_runner_host=HOSTNAME,
             scenario_id=scenario_id,
         )
 
