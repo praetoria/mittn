@@ -19,12 +19,12 @@ class MittnFuzzer(object):
         radamsa = radamsa or PythonRadamsa(self.config.radamsa_path)
         self.generator = generator or AnomalyGenerator(radamsa)
         self.checker = checker or Checker()
-        if self.config.allowed_statuses:
-            self.config.allowed_statuses = [int(i) for i in self.config.allowed_statuses]
-        if self.config.disallowed_statuses:
-            self.config.disallowed_statuses = [int(i) for i in self.config.disallowed_statuses]
-        self.checker.allowed_status_codes = self.config.allowed_statuses
-        self.checker.disallowed_status_codes = self.config.disallowed_statuses
+        if self.config.allowed_status_codes:
+            self.config.allowed_status_codes = [int(i) for i in self.config.allowed_status_codes]
+        if self.config.disallowed_status_codes:
+            self.config.disallowed_status_codes = [int(i) for i in self.config.disallowed_status_codes]
+        self.checker.allowed_status_codes = self.config.allowed_status_codes
+        self.checker.disallowed_status_codes = self.config.disallowed_status_codes
 
         self.client = client or Client()
         self.client.timeout = int(self.config.timeout)
@@ -46,7 +46,7 @@ class MittnFuzzer(object):
         methods = self.config.methods
         #fuzz and inject all the added targets
         for target in self.targets:
-            #TODO: test connectivity by sending the original request with valid parameters
+			#TODO: authentication or re-authentication should be done before thesting the valid target.
             resp = self.client.do_target(target, target.method, target.valid_submission);
             if self.checker.check(resp, None):
                 #the request either returned a bad code or an exception occured.
@@ -57,8 +57,10 @@ class MittnFuzzer(object):
             for payload in self.generator.generate_anomalies(target.valid_submission,
                     [target.valid_submission],
                     int(self.config.anomalies)):
+				#TODO: here valic case instrumentation should be done
                 for method in methods:
                     responses.append( self.client.do_target(target, method, payload))
+			#TODO: inject with static anomalies here. The current AnomalyGenerator is broken.
             for response in responses:
                 if self.checker.check(response, None):
                     newissue = FuzzerIssue.from_resp_or_exc(target.scenario_id, response)

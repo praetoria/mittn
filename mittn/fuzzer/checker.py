@@ -28,7 +28,7 @@ class Checker(object):
 
     def check(self, resp_or_exc, body_errors=None):
         """
-        Check wether the client returned a bad value.
+        Check wether the server responded with something that indicated an error in the server.
         """
         if isinstance(resp_or_exc, RequestException):
             return True
