@@ -68,6 +68,7 @@ Quickstart
 1. Install the mittn package.
 2. Create a test script (examples are that you can edit are
    available in the repository).
+3. Check the necessary `radamsa_path` configuration.
 4. Run the  script:
 
      python your_test_script.py
@@ -109,9 +110,10 @@ Environment requirements
 Configuration
 =============
 
-The behaviour of mittn can be configured with configuration files, but
-most of the default configurations should be ok to start off with.
-Later the behaviour of the fuzzer can be limited, extended and modified.
+The behaviour of mittn can be configured with configuration files,
+but most of the default configurations should be ok to start off
+with. The configurable settings are documented in the example
+configuration file.
 
 What are baseline databases?
 ============================
@@ -135,7 +137,7 @@ If you need a centralised database that receives issues from a number
 of nodes, you need a database with network connectivity.  If you only
 need a local database, you can use a file-based (such as sqlite)
 database. The latter is much easier to set up as it requires no
-database server or users to be defined.
+database server or users to be defined, this is the default behaviour.
 
 Whichever database you use, you will provide the configuration options
 in features/environment.py as a database URI. For details on the URI

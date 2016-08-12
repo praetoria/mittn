@@ -18,14 +18,9 @@ class MittnFuzzer(object):
         self.archiver = archiver or Archiver(db_url)
         radamsa = radamsa or PythonRadamsa(self.config.radamsa_path)
         self.generator = generator or AnomalyGenerator(radamsa)
-        self.checker = checker or Checker()
-        if self.config.allowed_status_codes:
-            self.config.allowed_status_codes = [int(i) for i in self.config.allowed_status_codes]
-        if self.config.disallowed_status_codes:
-            self.config.disallowed_status_codes = [int(i) for i in self.config.disallowed_status_codes]
-        self.checker.allowed_status_codes = self.config.allowed_status_codes
-        self.checker.disallowed_status_codes = self.config.disallowed_status_codes
-
+        self.checker = checker or Checker(
+			self.config.allowed_status_codes,
+			self.config.disallowed_status_codes)
         self.client = client or Client()
         self.client.timeout = int(self.config.timeout)
 
