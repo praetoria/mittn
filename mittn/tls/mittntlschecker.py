@@ -9,7 +9,6 @@ from ..config import Config
 from .pythonsslyze import PythonSslyze
 from .tlschecker import TlsChecker
 
-# TODO: either remove this class or use MittnTlsChecker with this
 class Target(object):
     """ Contains hostname, portnumber and a dict
         of protocols that should be enabled/disabled. """
