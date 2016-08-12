@@ -20,7 +20,8 @@ class MittnFuzzer(object):
         self.generator = generator or AnomalyGenerator(radamsa)
         self.checker = checker or Checker(
 			self.config.allowed_status_codes,
-			self.config.disallowed_status_codes)
+			self.config.disallowed_status_codes,
+			self.config.body_errors)
         self.client = client or Client()
         self.client.timeout = int(self.config.timeout)
 
@@ -43,7 +44,7 @@ class MittnFuzzer(object):
         for target in self.targets:
 			#TODO: authentication or re-authentication should be done before thesting the valid target.
             resp = self.client.do_target(target, target.method, target.valid_submission);
-            if self.checker.check(resp, self.config.body_errors):
+            if self.checker.check(resp):
                 #the request either returned a bad code or an exception occured.
                 #since this is testing a vlid case, this should not happen, fail
                 #the test run and print some diagnostics.
@@ -57,6 +58,6 @@ class MittnFuzzer(object):
                     responses.append( self.client.do_target(target, method, payload))
 			#TODO: inject with static anomalies here. The current AnomalyGenerator is broken.
             for response in responses:
-                if self.checker.check(response, self.config.body_errors):
+                if self.checker.check(response):
                     newissue = FuzzerIssue.from_resp_or_exc(target.scenario_id, response)
                     self.archiver.add_if_not_found(newissue)

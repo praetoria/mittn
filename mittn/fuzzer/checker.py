@@ -1,5 +1,6 @@
 from requests import RequestException
 from requests.models import Response
+import re
 
 class Checker(object):
 
