@@ -192,27 +192,19 @@ Setup instructions
 
 User-editable files
 -------------------
-#TODO:
 
-Test cases are written in Gherkin and stored in .feature files. The
-cases are run with Behave, for example, from the mittn base directory:
+Once you have installed the mittn package. Test cases are written
+in simple python scripts. There are templates for writing them in
+the examples directory in the repository.
 
-  behave features/mytests.feature --junit --junit-directory
-  /path/to/junit/reports
-  
-If you are not using JUnit XML reports, leave the --junit and
---junit-directory options out.
-
-Feature file setup is described later in this document, under "Writing
-test cases".
-
-All user-editable files are in the mittn/features/ directory. For
-basic usage, you should not need to edit anything in the mittn/mittn/
-directory.
+For ease of configuration you may use a configuration file, mittn.conf,
+an example file with defaults commented out is located in the examples
+directory as well.
 
 Authentication and authorisation
 --------------------------------
 
+# TODO:
 If you do NOT need to authorise yourself to your test target, just
 copy mittn/features/authenticate.py.template into
 mittn/features/authenticate.py.
