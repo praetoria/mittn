@@ -54,7 +54,7 @@ The important files that apply to tlschecker tests are:
      mittn/examples/ You can use it as a template or to
      just see how the Mittn suite is used.
 
-  2. General test configuration items in
+  2. General test configuration items are in
      mittn/examples/mittn.conf; default values for the options
      are commented out.
 
