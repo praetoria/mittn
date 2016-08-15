@@ -227,7 +227,8 @@ Environment settings
 - Edit your mittn.conf to reflect your setup. You need to edit
   at least the common and httpfuzzer specific settings. There
   is a template available in mittn/examples/mittn.conf that
-  you can copy and edit.
+  you can copy and edit. It is not compulsory but if you decide to
+  use multiple tools you should use a config file.
 
 # TODO:
 - Edit mittn/features/environment.py so that context.dburl points to
