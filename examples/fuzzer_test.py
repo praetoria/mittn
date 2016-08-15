@@ -1,7 +1,13 @@
-from mittn import Target, MittnFuzzer, Archiver
+from mittn import Target, MittnFuzzer, Archiver, Config
+
+c = Config('fuzzer','mittn.conf')
+c.radamsa_path='/usr/bin/radamsa'
 
 a = Archiver("sqlite:////tmp/db")
-m = MittnFuzzer(archiver=a)
+
+m = MittnFuzzer(archiver=a,config=c)
+
+# initialized the database
 m.init()
 t = Target('simple_test',
            'GET',
