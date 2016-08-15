@@ -204,16 +204,15 @@ directory as well.
 Authentication and authorisation
 --------------------------------
 
-# TODO:
-If you do NOT need to authorise yourself to your test target, just
-copy mittn/features/authenticate.py.template into
-mittn/features/authenticate.py.
+If you do NOT need to authorise yourself to your test target,
+everything is okay. This feature is not even implemented yet.
 
-If your system DOES require authorisation, you need to provide your
-own modifications to the template and store that in
-mittn/features/authenticate.py. There is a template available that you
-can copy and edit; the template contains instructions as to what to
-do. In essence, you need to return a Requests library Auth object that
+If your system DOES require authorisation, then you have a problem.
+The authentication feature is not yet here but it is coming very
+soon.
+
+In the future it will be handled as follows.
+In essence, you need to return a Requests library Auth object that
 implements the authentication and authorisation against your test
 target. The Requests library already provides some standard Auth
 object types. If your system requires a non-standard login (e.g.,
@@ -222,17 +221,15 @@ code to perform this. Please see the Requests library documentation at
 http://docs.python-requests.org/en/latest/user/authentication/ and the
 template for modification instructions.
 
-You can have several different auth methods for different cases; these
-are identified through an authentication flow identifier, specified in
-the test description.
-
 Environment settings
 --------------------
 
-- Edit the mittn/features/environment.py to reflect your setup. You
-  need to edit at least the common and httpfuzzer specific
-  settings. There is a template available that you can copy and edit.
+- Edit your mittn.conf to reflect your setup. You need to edit
+  at least the common and httpfuzzer specific settings. There
+  is a template available in mittn/examples/mittn.conf that
+  you can copy and edit.
 
+# TODO:
 - Edit mittn/features/environment.py so that context.dburl points to
   your database. The pointer is an SQL Alchemy URI, and the syntax
   varies for each database. Examples are provided in the file for
