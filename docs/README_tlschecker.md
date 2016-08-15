@@ -32,34 +32,31 @@ Software requirements
 Environment requirements
 ========================
 
-- The test driver is Behave. Behave runs BDD test cases described in
-  Gherkin, a BDD language. Changes to your tests would be likely to be
-  made to the Gherkin files that have a .feature suffix. Behave can
-  emit JUnit XML test result documents. This is likely to be your
-  preferred route of getting the test results into Jenkins.
+- The tests are written in Python by using functions imported from
+  Mittn. Any printing or outputting of results has to be done by
+  you in the script using the results provided by the MittnTlsChecker
+  plugin.
 
-- Set up Mittn/features/environment.py using the supplied
-  environment.py.template. This should contain a link to the sslyze
-  executable.
+- Set up your configuration either using the example mittn.conf in
+  github as a template or by setting the options directly in the test
+  script.
 
-- You have two ways of defining the target of the scan; you can either
-  populate environment variables with the hostname and port number,
-  and set those in the feature file (by default: TLSCHECK_HOST and
-  TLSCHECK_PORT), or you can hardcode these in the feature file.
+- The target host and port has to be specified in the test script.
+  For assistance on the configuration or options please see the
+  example files in the repository.
 
 Setting up the test case
 ========================
 
 The important files that apply to tlschecker tests are:
 
-  1. The test steps, tlschecker.feature as an example. The tests
-     should be rather self-explanatory. See below for more details.
+  1. The tlschecker example test script is located in
+     mittn/examples/ You can use it as a template or to
+     just see how the Mittn suite is used.
 
-  2. The actual test steps are in Mittn/mittn/tlschecker. There
-     should not be a need to alter anything in this directory.
-
-  3. General test configuration items in
-     Mittn/features/environment.py.
+  2. General test configuration items in
+     mittn/examples/mittn.conf; default values for the options
+     are commented out.
 
 The tests use an optimisation where the potentially slow scanning
 activity is done only once, the result is stored, and subsequent tests

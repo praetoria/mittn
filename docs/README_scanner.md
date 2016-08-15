@@ -298,12 +298,13 @@ Setting up the test case
 The important files that apply to the HeadlessScannerDriver.py test
 are:
 
-  1. The headless scanning example tests are located in
-     mittn/examples/ You can use them as a template or to
+  1. The headless scanning example test script is located in
+     mittn/examples/ You can use is as a template or to
      just see how the Mittn suite is used.
 
   2. General test configuration items in
-     mittn/mittn.conf; default values for the options are commented out.
+     mittn/examples/mittn.conf; default values for the options
+     are commented out.
 
 In your test script, you will need to implement the valid
 test case(s) (e.g., Selenium test run(s)) in a function that gets two

@@ -140,8 +140,8 @@ database. The latter is much easier to set up as it requires no
 database server or users to be defined, this is the default behaviour.
 
 Whichever database you use, you will provide the configuration options
-in features/environment.py as a database URI. For details on the URI
-syntax, see
+in mittn.conf or the test script as a database URI. For details on the
+URI syntax, see
 http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html#database-urls.
 
 Managing findings
@@ -192,6 +192,7 @@ Setup instructions
 
 User-editable files
 -------------------
+#TODO:
 
 Test cases are written in Gherkin and stored in .feature files. The
 cases are run with Behave, for example, from the mittn base directory:
