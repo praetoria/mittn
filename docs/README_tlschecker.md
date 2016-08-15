@@ -62,21 +62,14 @@ The tests use an optimisation where the potentially slow scanning
 activity is done only once, the result is stored, and subsequent tests
 just check the resulting XML.
 
-After doing a connection, you should probably have a "Then" statement
-"the connection results are stored".
-
-Subsequent steps that start with "Given a stored connection result"
-operate with the result set that was last stored.
+The run function of the MittnTlsChecker wraps all this behaviour inside
+itself.
 
 Running the tests
 =================
 
-Run the tests with
+Run the tests simply with
 
-  behave features/yourfeaturefile.feature --junit --junit-directory PATH
+  python your_test_script.py
 
-with the Mittn directory in your PYTHONPATH (or run the tool from
-Mittn/), and PATH pointing where you want the JUnit XML output. If
-your test automation system does not use JUnit XML, you can, of
-course, leave those options out.
-
+with Mittn installed from PyPi locally or inside a virtualenv.
