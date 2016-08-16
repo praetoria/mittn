@@ -1,42 +1,42 @@
 from mittn import MittnScanner
-from mittn import Archiver
+from mittn.config import Config
 from subprocess import call
 
-#Make a list of test names/scenarios. These would correspond to unit
-#test that can be ran from eg. with a commandline test runner. This
-#list would preferably be generated from the actual tests.
-tests = [
-        'xss1',
-        'xss2',
-        ]
 
-#Define a test function which will be called for every test scenario.
-#In this example we are simply making requests to some urls using curl.
-#Most tools should have a way to call single tests from the commandline
-#by name. If there isn't, then you can simply run all the tests at once,
-#but this might make the causes of findings harder to backtrack.
+#Define a callback function to run a single, named test scenario.
+#The adress of the intercepting proxy that is the scanner is provided.
+#This function will be called for every test that is to be run through
+#the mittn scanner. These fould be functional test scenarios or unit
+#tests that make requests.
 def testfunction(test,proxy):
-    status = call(('curl http://localhost:9000/%s?input=aoeu' +
-        ' --proxy http://%s 1>/dev/null 2>/dev/null') % (test,proxy),
-            shell=True)
+    #In this example the test is a single curl command tto get a resource.
+    status = call(
+        'curl http://localhost:8000/%s --proxy http://%s 1>/dev/null 2>/dev/null'%
+        (test,proxy),
+        shell=True)
     # Retrutn True if succeeded, False otherwise. If your test fails,
-	# don't expect the security tests to succeed either.
+    # don't expect the security tests to succeed either.
     return status == 0
 
+#Define a lit of test scenarios that will be run. These would probably be
+#names of single test scenarios as defined in your test framework.
+tests = [
+        'fancy_feature',
+        'fun_functionality',
+        ]
 
-#The scanner needs an archiver object that will handle storing the
-#findings in a database. The URL format is described in the sqlalchemy
-#documentation:
-#http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls
-a = Archiver('sqlite:////tmp/db')
-#Constructm, initialize and run the scanner.
-scanner = MittnScanner(archiver=a)
+#The default configurations are fine, so we'll just go with those. The path
+#to the burp jar is the only one we need to set. One you get a feeling for
+#mittn, feel free to edit the mittn.conf file.
+c = Config('scanner', None);
+c.path = '/home/kiveju2/burp/burpsuite_pro_v1.7.04.jar'
+scanner = MittnScanner(config = c)
 scanner.init()
+
+#Run all tests one by one, and store the scanner fingings in the database.
 scanner.run_tests(testfunction,tests)
 
-#Finally dump all the findings (if you want to, they will be in the 
-#database in any case). You might want to fail the run of mittn if there
-#are new findings in the database.
-results = scanner.collect_results()
-for r in results:
-    print(r)
+#Write a simple report and exit with 0 if no new issues were found.
+new_issues = len(scanner.get_results())
+print("{} new isses found.".format(new_issues))
+exit(new_issues)

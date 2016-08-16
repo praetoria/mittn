@@ -23,8 +23,11 @@ class MittnScanner(object):
         as a parameter and a list of test names to feed it.
         """
         try:
+            print('Setting up proxy and scanner...')
             self.scanner.start()
+            print('Running tests...')
             for test in tests:
+                print(test)
                 if not testfunction(test,self.config.proxy_address):
                     raise RuntimeError(
                         "Valid test scenario '%s' failed to execute, using proxy %s"
