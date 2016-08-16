@@ -18,10 +18,10 @@ import logging
 
 class PythonBurp():
     def __init__(self,cmdline, proxy_address):
-	    self.proxydict = {'http': 'http://' + proxy_address,
-	                     'https': 'https://' + proxy_address}
-	    self.proxy_address = proxy_address
-	    self.cmdline = cmdline
+        self.proxydict = {'http': 'http://' + proxy_address,
+                         'https': 'https://' + proxy_address}
+        self.proxy_address = proxy_address
+        self.cmdline = cmdline
 
     def start(self):
         """Start Burp Suite as subprocess and wait for the extension to be ready."""
@@ -93,17 +93,19 @@ class PythonBurp():
                 self.kill_subprocess()
                 raise Exception("Could not communicate with headless-scanner-driver over %s (%s)" %
                                (self.proxy_address, error.reason))
-            # Burp extensions' stdout buffers will fill with a lot of results, and
-            # it hangs, so we time out here and just proceed with reading the output.
             except requests.Timeout:
+                # Burp extensions' stdout buffers will fill with a lot of results, and
+                # it hangs, so we time out here and just proceed with reading the output.
                 pass
             proxy_message = self.read_next_json()
             # Go through scan item statuses statuses
             if proxy_message is None:  # The extension did not respond
                 self.kill_subprocess()
-                raise Exception("Timed out retrieving scan status information from Burp Suite over %s" % self.proxy_address)
+                raise Exception("Timed out retrieving scan status information from Burp Suite over %s" %
+                               (self.proxy_address))
             finished = True
             if proxy_message == []:  # No scan items were started by the extension
+                #this might happen if  the test that was ran had no injectable input.
                 self.kill_subprocess()
                 raise Exception("No scan items were started by Burp. Check web test case and suite scope.")
             for status in proxy_message:
