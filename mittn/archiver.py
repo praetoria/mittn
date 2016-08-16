@@ -8,8 +8,8 @@ class Archiver(object):
         self.session = None
 
     def init(self,issuecls=None):
-        """Opens the database specified in the feature file and creates tables if not already created.
-
+        """Opens the database specified in the feature file and creates tables
+        if not already created.
         """
         if not self.db_url or not issuecls:
             return None  # No false positives database is in use
@@ -23,7 +23,8 @@ class Archiver(object):
         issuecls.metadata.create_all(db_engine)
 
     def known_false_positive(self, issue):
-        """Check whether issue already exists in the database (usually a "false positive" if it does exist).
+        """Check whether issue already exists in the database
+        (usually a "false positive" if it does exist).
 
         :param issue:
         :return: True if a known issue, False if not.
