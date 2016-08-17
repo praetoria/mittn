@@ -205,21 +205,21 @@ Authentication and authorisation
 --------------------------------
 
 If you do NOT need to authorise yourself to your test target,
-everything is okay. This feature is not even implemented yet.
+everything is okay.
 
-If your system DOES require authorisation, then you have a problem.
-The authentication feature is not yet here but it is coming very
-soon.
+If your system DOES require authorisation, then we have a problem.
+This feature is not implemented yet, so raise a Git Hub Issue if
+you need this.
 
-In the future it will be handled as follows.
-In essence, you need to return a Requests library Auth object that
-implements the authentication and authorisation against your test
-target. The Requests library already provides some standard Auth
-object types. If your system requires a non-standard login (e.g.,
-username and password typed into a web form), you need to provide the
-code to perform this. Please see the Requests library documentation at
-http://docs.python-requests.org/en/latest/user/authentication/ and the
-template for modification instructions.
+In the future it will be handled as follows.  In essence, you
+need to return a Requests library Auth object that implements
+the authentication and authorisation against your test target. The
+Requests library already provides some standard Auth object types. If
+your system requires a non-standard login (e.g., username and
+password typed into a web form), you need to provide the code to
+perform this. Please see the Requests library documentation at
+http://docs.python-requests.org/en/latest/user/authentication/
+and the template for modification instructions.
 
 Environment settings
 --------------------
@@ -230,12 +230,10 @@ Environment settings
   you can copy and edit. It is not compulsory but if you decide to
   use multiple tools you should use a config file.
 
-# TODO:
-- Edit mittn/features/environment.py so that context.dburl points to
+- Edit mittn.conf so that context.dburl points to
   your database. The pointer is an SQL Alchemy URI, and the syntax
-  varies for each database. Examples are provided in the file for
-  sqlite and PostgreSQL. Further documentation on the database URIs is
-  available on
+  varies for each database. An example is provided in the file for
+  sqlite. Further documentation on the database URIs is available on
   http://docs.sqlalchemy.org/en/rel_0_9/core/engines.html#database-urls.
 
 - Ensure that you have CREATE TABLE, INSERT and SELECT rights to the
@@ -249,68 +247,90 @@ Environment settings
 Writing test cases
 ==================
 
-Test cases are defined through feature files. These are files with a
-.feature suffix, written in Gherkin, a BDD language.
+Test cases are defined by Targets. These are objects that have the
+necessary information to generate, send and verify fuzzed cases.
+You can find example tests in the `examples/scanner_example.py`
+file. The Target class is quite simple and all the testable targets
+could be generated in pyhton from an API definition language or
+documentation, or read from files.
 
-You can find example tests in Mittn/features/*template.feature
-files. It is recommended that you view these examples, and unless some
-of the lines are not self-explanatory, you can find the documentation
-below.
+Defining test targets
+---------------------
 
-There are two example templates: One for injection of static anomalies
-(shell command injections, etc.), and one for injection of fuzz test
-cases. These templates are extensively commented, so you could just
-grab one of them and start editing it. This section gives more
-information on some selected topics.
-
-Environmental settings
-----------------------
-
-  Given a baseline database for injection findings
-
-Checks whether you have a database available.
-
-  Given a web proxy
-
-Sets a web proxy. This is useful if you are, in fact, behind a proxy,
-or if you want to see what the tool does, using an intercepting
-proxy. When setting up the system, it could be a good idea to view the
-requests. The proxy settings are in feature/environment.py.
-
-  Given a working Radamsa installation
-
-Performs a sanity check for the fuzzer. This needs to be present if
-you inject fuzz cases. The path to radamsa is provided in
-features/environment.py.
-
-Test case settings
-------------------
-
-  Given scenario id "ID"
+	scenario_id
 
 You should give each test case a different ID (an arbitrary string)
 as that helps you to separate results.
 
-  Given an authentication flow id "1"
+	method
 
-This selects which authentication / authorisation you want to use with
-this specific scenario. This is an arbitrary string. If you just use
-one type of authorisation with all the test cases, or do not need
-authentication / authorisation, you can just leave it as is.
+The method used to send the valid request.
 
-  Given tests conducted with HTTP methods "GET,POST,PUT,DELETE"
+	uri
+
+The URI of the resource being targeted.
+
+	submission_type
+
+The type of the submission, this is used to figure out POST data
+encodings and the Content-Type header. Currently it dould be one of
+`"urlencode"`, `"json"`, or `"url-parameters"`.
+
+	valid_submission
+
+A valid submission for this URI. This could be
+someting like `'{"foo": 42, "bar": "Kauppuri 5"}'`, or
+`'foo=42&bar=Kauppuri%205'`.
+
+
+Fuzzer configuration
+--------------------
+
+	methods=GET,POST,PUT,DELETE
 
 What HTTP methods should be used to inject. Even if your system only
 expects, say, POST, it might be a good idea to try injecting with GET,
 too.
 
-  Given a timeout of "5" seconds
+	timeout=5
 
-How long to wait for a server response.
+How long to wait for a server response before marking it as an issue.
+
+	allowed_status_codes=200-299,400-499
+
+The status codes in the responses that signal of the service being healthy and not in a bad state.
+
+	disallowed_status_codes=500-599
+
+Status codes that will cause the test to create a new issue. The
+`allowed_status_codes` has precedence, so this setting is only used
+if the allowed codes is empty.
+
+	anomalies=20
+
+How many anomalies to generate per injectable point. When fuzzing,
+you can start small but you should probably aim to run hundreds
+or thousands of test cases when you actually take the system into
+production.
+
+You should pick this based on how fast you need the tests to
+run. Running mittn with 20 anomalies five timmes is the same as
+running it once with a hundred, since the anomalies are always
+generated from scratch.
+
+	body_errors
+
+These strings check for anomalous server responses. The response bodies
+are searched for the specified strings. If you know your framework's
+default critical error strings, you should probably add them here, and
+remove any that are likely to cause false positives.
+
+Examples of strings would be those found in stacktraces, SQL errors,
+and technology-specific errors.
 
 Setting up valid case instrumentation
 -------------------------------------
-
+TODO
   Given valid case instrumentation with success defined as "100-499"
 
 Valid case instrumentation tries a valid test case after each
@@ -332,97 +352,6 @@ Valid cases have an HTTP header that indicates they are valid
 cases. This may be helpful if you are looking at the injected requests
 using a proxy tool.
 
-Defining test targets for static injection
-------------------------------------------
-
-  Given target URL "http://mittn.org/dev/null"
-  Given a valid JSON submission "{something}" using "POST" method
-  Given a valid form submission "something" using "POST" method
-
-These lines define the target for static injection testing. The target
-URL is the API URL. Depending on whether you are testing a JSON API or
-a form submission, you should then provide an example of a _valid_
-case.
-
-For best results, the valid case should trigger maximal processing
-behind the API. You can do this by using any and all options and
-parameters that your API supports, and by having several valid test
-cases (in separate Gherkin scenarios) that cause maximal functional
-coverage.
-
-You can only do _either_ static injection of fuzzing in a single test
-scenarion, not both.
-
-Defining test targets for fuzz testing
---------------------------------------
-
-  Given target URL "http://mittn.org/dev/null"
-  Given valid JSON submissions using "POST" method
-    | submission                            |
-    | {"foo": 1, "bar": "OMalleys"}         |
-    | {"foo": 2, "bar": "Liberty or Death"} |
-    | {"foo": 42, "bar": "Kauppuri 5"}      |
-  Given valid form submissions using "POST" method
-    | submission                     |
-    | foo=1&bar=OMalleys             |
-    | foo=2&bar=Liberty%20or%20Death |
-    | foo=42&bar=Kauppuri%205        |
-
-These lines define the target for fuzz case injection testing. The
-target URL is the API URL. Depending on whether you are testing a JSON
-API or a form submission, you should then provide several examples of
-valid cases. These examples are used to create fuzz case data.
-
-The first line ("submission") is a column title and must be included.
-
-The first valid case you provide is used as the reference valid case
-and should aim at triggering maximal processing behind the API. The
-other valid cases should be technically valid, but do not need to be
-positive test cases; the other cases could also be negative test
-cases or have less parameters.
-
-You can only do _either_ static injection of fuzzing in a single test
-scenarion, not both.
-
-Form submissions should be URL-encoded.
-
-Running the tests and checking for responses
---------------------------------------------
-
-  When fuzzing with "10" fuzz cases for each key and value
-  When injecting static bad data for every key and value
-
-These perform the actual test run. You can only have one of these per
-scenario.
-
-When fuzzing, you can start small but you should probably aim to run
-hundreds or thousands of test cases when you actually take the system
-into production.
-
-By default, requests that are sent to the remote host contain an
-X-Abuse: header that lists your hostname and IP address. These are
-intended to give a remote system administrator some way of contacting
-you if you mistakenly point your tool towards a wrong endpoint.
-
-  When storing any new cases of return codes "500,502-599"
-  When storing any new cases of responses timing out
-  When storing any new invalid server responses
-  When storing any new cases of response bodies that contain strings
-    | string                |
-    | server error          |
-    | exception             |
-    | invalid response      |
-
-These lines check for anomalous server responses. The response bodies
-are searched for the specified strings. If you know your framework's
-default critical error strings, you should probably add them here, and
-remove any that are likely to cause false positives. The first line
-("string") is a column title and must be included.
-
-  Then no new issues were stored
-
-This final line raises a failed assertion if there were any new
-findings.
 
 Findings in the database
 ------------------------
@@ -478,31 +407,3 @@ The findings in the database contain the following columns:
 Future features
 ---------------
 
-The plan is to make the fuzzer also fuzz URL parts, including path and
-parameters. Currently, the URL parts fuzzing is not there, but you can
-inject into, and fuzz, URL parameters.
-
-URL parameters (not to be confused with form parameters!) are semicolon-
-separated:
-
-  ;parameter1=value1,value2;parameter2=value3
-
-This is specified in RFC 3986, section 3.3. This is a fairly niche
-thing, and has not been tested as much as the other modes.
-
-Currently, only the GET method (i.e., without body) is supported for
-URL path parameter injection.  If you want to inject to these, the
-feature file lines are:
-
-  Given valid url parameters ";foo=bar"
-  Given valid url parameters
-  	| submission   |
-	| ;foo=bar     |
-	| ;quux=bletch |
-
-for static injection and fuzzing, respectively.
-
-If URL path fuzzing will be supported in the future, this syntax
-_will_ change into accepting the actual complete URL, and an
-additional feature file rule will be introduced that specifies the
-valid body for other HTTP methods than GET.
